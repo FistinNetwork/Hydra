@@ -1,0 +1,65 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+plugins {
+    id "com.github.johnrengelman.shadow" version "5.2.0"
+}
+
+apply plugin: 'java'
+
+group = 'fr.fistin'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'sonatype'
+        url = 'https://oss.sonatype.org/content/groups/public/'
+    }
+    maven {
+        name = 'destroystokyo-repo'
+        url = 'https://repo.destroystokyo.com/repository/maven-public/'
+    }
+
+    maven {
+        name = 'paper-repo'
+        url = 'https://papermc.io/repo/repository/maven-public/'
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+}
+
+task deploy(dependsOn: build) {
+    doLast {
+        copy {
+            from "$buildDir/libs/hydra-1.0-SNAPSHOT-all.jar"
+            into "/home/faustin/Documents/waterfall/plugins/"
+        }
+    }
+}
+
+
+artifacts {
+    archives sourcesJar, shadowJar
+}
+
+dependencies {
+    compileOnly 'io.github.waterfallmc:waterfall-api:1.16-R0.4-SNAPSHOT'
+    shadow group:'com.github.docker-java', name: 'docker-java', version: '3.2.5'
+    shadow group: 'com.github.docker-java', name: 'docker-java-transport-httpclient5', version: '3.2.5'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        filter ReplaceTokens, tokens: [version: version]
+    }
+}

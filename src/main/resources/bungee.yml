@@ -1,0 +1,4 @@
+name: Hydra
+version: @version@
+author: Faustin
+main: fr.fistin.hydra.Hydra
