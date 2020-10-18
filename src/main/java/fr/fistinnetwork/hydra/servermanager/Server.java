@@ -1,13 +1,18 @@
-package fr.fistin.hydra.servermanager;
+package fr.fistinnetwork.hydra.servermanager;
 
-import fr.fistin.hydra.Hydra;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.model.HostConfig;
+import fr.fistinnetwork.hydra.Hydra;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.config.ServerInfo;
 
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public abstract class Server {
-    private static Map<String, Server> SERVER_LIST = new HashMap<>();
+    private static final Map<String, Server> SERVER_LIST = new HashMap<>();
 
     protected UUID uuid;
     protected String type;
@@ -19,7 +24,7 @@ public abstract class Server {
     protected String mapUrl;
     protected String pluginUrl;
 
-    protected int slots = 0;
+    protected int slots;
     protected int currentPlayers = 0;
 
     protected ServerOptions options;
@@ -73,7 +78,7 @@ public abstract class Server {
     }
 
     public Integer getCurrentPlayers() {
-        return currentPlayers;
+        return this.currentPlayers;
     }
 
     public void setCurrentPlayers(int currentPlayers) {
@@ -127,6 +132,20 @@ public abstract class Server {
         return SERVER_LIST.getOrDefault(name, null);
     }
 
+    public void start()
+    {
+        this.container = Hydra.getInstance().getDocker().getDockerClient().createContainerCmd("itzg/minecraft-server")
+                .withEnv(this.options.getEnv())
+                .withHostConfig(new HostConfig().withAutoRemove(true))
+                .withName(this.toString())
+                .exec()
+                .getId();
+        Hydra.getInstance().getDocker().getDockerClient().startContainerCmd(this.container).exec();
+        this.serverIP = Hydra.getInstance().getDocker().getDockerClient().inspectContainerCmd(this.container).exec().getNetworkSettings().getIpAddress();
+        ServerInfo serverInfo = ProxyServer.getInstance().constructServerInfo(type, new InetSocketAddress(this.serverIP, 25565), "", false);
+        ProxyServer.getInstance().getServersCopy().put(this.toString(), serverInfo);
+    }
+
     public boolean stop() {
         if(!this.container.isEmpty()){
             try {
@@ -134,12 +153,32 @@ public abstract class Server {
                 Server.removeServer(this);
                 this.setCurrentState(ServerState.CREATING);
                 return true;
-            } catch(Error e) {
+            } catch(Exception e) {
                 Hydra.getInstance().getLogger().warning("Le serveur " + this.toString() + "ne s'est pas stop");
                 return false;
             }
         }
         return false;
+    }
+
+    protected void checkStatus()
+    {
+        if(this.container.isEmpty())
+            return;
+        InspectContainerResponse.ContainerState containerState = Hydra.getInstance().getDocker().getDockerClient().inspectContainerCmd(this.container).exec().getState();
+        switch(containerState.getHealth().getStatus()){
+            case "starting":
+                this.currentState = ServerState.STARTING;
+                break;
+
+            case "healthy":
+                this.currentState = ServerState.READY;
+                break;
+
+            default:
+                this.currentState = ServerState.IDLE;
+                break;
+        }
     }
 
     @Override

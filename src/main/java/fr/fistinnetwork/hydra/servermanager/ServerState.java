@@ -1,4 +1,4 @@
-package fr.fistin.hydra.servermanager;
+package fr.fistinnetwork.hydra.servermanager;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -10,21 +10,21 @@ public enum ServerState {
     SHUTDOWN(4, false),
     IDLE(5, false);
 
-    private ServerState(Integer id, boolean access) {
+    ServerState(int id, boolean access) {
         this.access = access;
         this.id = id;
     }
-    private Boolean access;
-    private Integer id;
+    private final boolean access;
+    private final int id;
 
-    public Integer getId() {
+    public int getId() {
         return id;
     }
 
     @Override
     public String toString() {
         switch (this.id){
-            case 0:
+            case 0: // TODO Translation ?
                 return this.toColor() + "Création";
             case 1:
                 return this.toColor() + "Démarrage";
@@ -60,13 +60,13 @@ public enum ServerState {
         }
     }
 
-    public Boolean getAccess() {
-        return access;
+    public boolean getAccess() {
+        return this.access;
     }
 
     public static ServerState fromInteger(Integer id) {
         for (ServerState state : ServerState.values())
-            if (state.getId().equals(id))
+            if (state.getId() == id)
                 return state;
 
         return null;

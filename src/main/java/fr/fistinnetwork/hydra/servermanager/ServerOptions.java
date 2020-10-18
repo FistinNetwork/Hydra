@@ -1,4 +1,4 @@
-package fr.fistin.hydra.servermanager;
+package fr.fistinnetwork.hydra.servermanager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +12,7 @@ public class ServerOptions {
     private int spawnProtection = 0;
 
     public boolean isPvp() {
-        return pvp;
+        return this.pvp;
     }
 
     public void setPvp(boolean pvp) {
@@ -20,7 +20,7 @@ public class ServerOptions {
     }
 
     public boolean isNether() {
-        return nether;
+        return this.nether;
     }
 
     public void setNether(boolean nether) {
@@ -28,7 +28,7 @@ public class ServerOptions {
     }
 
     public boolean isBroadcastAchivements() {
-        return broadcastAchivements;
+        return this.broadcastAchivements;
     }
 
     public void setBroadcastAchivements(boolean broadcastAchivements) {
@@ -36,7 +36,7 @@ public class ServerOptions {
     }
 
     public boolean isFlight() {
-        return flight;
+        return this.flight;
     }
 
     public void setFlight(boolean flight) {
@@ -44,7 +44,7 @@ public class ServerOptions {
     }
 
     public String getDifficulty() {
-        return difficulty;
+        return this.difficulty;
     }
 
     public void setDifficulty(String difficulty) {
@@ -52,7 +52,7 @@ public class ServerOptions {
     }
 
     public int getSpawnProtection() {
-        return spawnProtection;
+        return this.spawnProtection;
     }
 
     public void setSpawnProtection(int spawnProtection) {
@@ -60,7 +60,7 @@ public class ServerOptions {
     }
 
     public List<String> getEnv() {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         result.add("PVP=" + this.pvp);
         result.add("ALLOW_NETHER=" + this.nether);
         result.add("ANNOUNCE_PLAYER_ACHIEVEMENTS=" + this.broadcastAchivements);
