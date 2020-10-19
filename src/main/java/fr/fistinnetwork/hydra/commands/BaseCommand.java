@@ -1,7 +1,7 @@
-package fr.fistin.hydra.commands;
+package fr.fistinnetwork.hydra.commands;
 
-import fr.fistin.hydra.servermanager.Server;
-import fr.fistin.hydra.servermanager.VanillaServer;
+import fr.fistinnetwork.hydra.servermanager.Server;
+import fr.fistinnetwork.hydra.servermanager.VanillaServer;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -14,8 +14,8 @@ import net.md_5.bungee.api.plugin.Command;
 
 import java.util.Map;
 
-public class baseCommand extends Command {
-    public baseCommand() {
+public class BaseCommand extends Command {
+    public BaseCommand() {
         super("hydra");
     }
 

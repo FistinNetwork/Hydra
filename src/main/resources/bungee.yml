@@ -1,4 +1,4 @@
 name: Hydra
 version: @version@
 author: Faustin
-main: fr.fistin.hydra.Hydra
+main: fr.fistinnetwork.hydra.Hydra
