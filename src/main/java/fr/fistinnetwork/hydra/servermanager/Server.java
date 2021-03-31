@@ -143,7 +143,7 @@ public abstract class Server {
         Hydra.getInstance().getDocker().getDockerClient().startContainerCmd(this.container).exec();
         this.serverIP = Hydra.getInstance().getDocker().getDockerClient().inspectContainerCmd(this.container).exec().getNetworkSettings().getIpAddress();
         ServerInfo serverInfo = ProxyServer.getInstance().constructServerInfo(type, new InetSocketAddress(this.serverIP, 25565), "", false);
-        ProxyServer.getInstance().getServersCopy().put(this.toString(), serverInfo);
+        ProxyServer.getInstance().getServers().put(this.toString(), serverInfo);
     }
 
     public boolean stop() {

@@ -21,6 +21,7 @@ public class VanillaServer extends Server {
     @Override
     public void start() {
         this.healthyTask = Hydra.getInstance().getProxy().getScheduler().schedule(Hydra.getInstance(), this::checkStatus, 2, 2, TimeUnit.MINUTES);
+        super.start();
     }
 
     @Override
