@@ -27,7 +27,7 @@ public final class Hydra extends Plugin {
     @Override
     public void onDisable() {
         for(Map.Entry<String, Server> server : Server.getServerList().entrySet()){
-            //server.getValue().stop();
+            server.getValue().stop();
         }
         this.dockerAPI.unload();
     }
