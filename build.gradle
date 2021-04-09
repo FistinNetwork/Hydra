@@ -6,20 +6,24 @@ plugins {
     id "com.github.johnrengelman.shadow" version "6.0.0"
 }
 
-apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'java-library'
+apply plugin: 'application'
 
 group 'fr.fistinnetwork'
 version '1.1-SNAPSHOT'
 archivesBaseName = 'hydra'
+mainClassName = 'fr.fistinnetwork.hydra.HydraBootstrap'
 
 compileJava {
-    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = sourceCompatibility = JavaVersion.VERSION_1_8
     options.encoding = StandardCharsets.UTF_8
 }
 
 repositories {
     jcenter()
     mavenCentral()
+
     maven {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
@@ -27,11 +31,6 @@ repositories {
     maven {
         name = 'destroystokyo-repo'
         url = 'https://repo.destroystokyo.com/repository/maven-public/'
-    }
-
-    maven {
-        name = 'paper-repo'
-        url = 'https://papermc.io/repo/repository/maven-public/'
     }
 }
 
@@ -42,6 +41,10 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 
 shadowJar {
     configurations = [project.configurations.shadow]
+}
+
+artifacts {
+    archives sourcesJar, shadowJar
 }
 
 task deploy(dependsOn: build) {
@@ -55,19 +58,22 @@ task deploy(dependsOn: build) {
     }
 }
 
-
-artifacts {
-    archives sourcesJar, shadowJar
-}
-
-dependencies {
-    compileOnly 'io.github.waterfallmc:waterfall-api:1.16-R0.4-SNAPSHOT'
-    shadow 'com.github.docker-java:docker-java:3.2.5'
-    shadow 'com.github.docker-java:docker-java-transport-httpclient5:3.2.5'
-}
-
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         filter ReplaceTokens, tokens: [version: version]
     }
+}
+
+dependencies {
+    shadow 'com.github.docker-java:docker-java:3.2.5'
+    shadow 'com.github.docker-java:docker-java-transport-httpclient5:3.2.5'
+    shadow 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.2'
+    shadow 'com.fasterxml.jackson.core:jackson-databind:2.12.2'
+    shadow 'org.slf4j:slf4j-nop:1.7.25'
+    //TODO Clear
+    implementation 'com.github.docker-java:docker-java:3.2.5'
+    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.5'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.2'
+    implementation 'org.slf4j:slf4j-nop:1.7.25'
 }

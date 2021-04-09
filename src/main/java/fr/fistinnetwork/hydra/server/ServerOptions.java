@@ -1,12 +1,13 @@
-package fr.fistinnetwork.hydra.servermanager;
+package fr.fistinnetwork.hydra.server;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ServerOptions {
+
     private boolean pvp = true;
     private boolean nether = false;
-    private boolean broadcastAchivements = false;
+    private boolean broadcastAchievements = false;
     private boolean flight = false;
     private String difficulty = "normal";
     private int spawnProtection = 0;
@@ -27,12 +28,12 @@ public class ServerOptions {
         this.nether = nether;
     }
 
-    public boolean isBroadcastAchivements() {
-        return this.broadcastAchivements;
+    public boolean isBroadcastAchievements() {
+        return this.broadcastAchievements;
     }
 
-    public void setBroadcastAchivements(boolean broadcastAchivements) {
-        this.broadcastAchivements = broadcastAchivements;
+    public void setBroadcastAchievements(boolean broadcastAchievements) {
+        this.broadcastAchievements = broadcastAchievements;
     }
 
     public boolean isFlight() {
@@ -60,19 +61,16 @@ public class ServerOptions {
     }
 
     public List<String> getEnv() {
-        List<String> result = new ArrayList<>();
-        result.add("PVP=" + this.pvp);
-        result.add("ALLOW_NETHER=" + this.nether);
-        result.add("ANNOUNCE_PLAYER_ACHIEVEMENTS=" + this.broadcastAchivements);
-        result.add("DIFFICULTY=" + this.difficulty);
-        result.add("SPAWN_PROTECTION=" + this.spawnProtection);
-        result.add("ALLOW_FLIGHT=" + this.flight);
-        result.add("EULA=true");
-        result.add("TYPE=SPIGOT");
-        result.add("VERSION=1.8.8-R0.1-SNAPSHOT-latest");
-        result.add("ONLINE_MODE=FALSE");
-        return result;
+        final List<String> env = new ArrayList<>();
+        env.add("ALLOW_NETHER=" + this.nether);
+        env.add("ANNOUNCE_PLAYER_ACHIEVEMENTS=" + this.broadcastAchievements);
+        env.add("DIFFICULTY=" + this.difficulty);
+        env.add("SPAWN_PROTECTION=" + this.spawnProtection);
+        env.add("ALLOW_FLIGHT=" + this.flight);
+        env.add("EULA=true");
+        env.add("TYPE=SPIGOT");
+        env.add("VERSION=1.8.8-R0.1-SNAPSHOT-latest");
+        env.add("ONLINE_MODE=FALSE");
+        return env;
     }
-
-    public ServerOptions() { }
 }
