@@ -10,10 +10,10 @@ apply plugin: 'idea'
 apply plugin: 'java-library'
 apply plugin: 'application'
 
-group 'fr.fistinnetwork'
+group 'fr.fistin'
 version '1.1-SNAPSHOT'
 archivesBaseName = 'hydra'
-mainClassName = 'fr.fistinnetwork.hydra.HydraBootstrap'
+mainClassName = 'fr.fistin.hydra.HydraBootstrap'
 
 compileJava {
     targetCompatibility = sourceCompatibility = JavaVersion.VERSION_1_8
