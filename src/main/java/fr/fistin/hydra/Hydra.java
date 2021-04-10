@@ -19,6 +19,8 @@ import java.util.concurrent.*;
 public class Hydra {
 
     private ExecutorService executorService;
+    private boolean running = false;
+    private boolean stopping = false;
 
     private final HydraLogger logger;
     private final HydraConfigurationManager configurationManager;
@@ -40,7 +42,7 @@ public class Hydra {
 
     public void start() {
         this.configurationManager.loadConfiguration();
-
+        this.serverManager.createDataFolder();
         this.proxyManager.downloadMinecraftProxyImage();
         this.serverManager.downloadMinecraftServerImage();
 
@@ -48,21 +50,32 @@ public class Hydra {
         this.proxyManager.startProxy(new Proxy(this, new ProxyOptions()));
 
         this.logger.printHeaderMessage();
+
+        this.running = true;
     }
 
     public void shutdown() {
+        this.stopping = true;
+
         this.logger.printFooterMessage();
 
-        this.logger.log(LogType.INFO, "Shutting down executor service...");
-        this.executorService.shutdown();
-
-        this.dockerAPI.unload();
-
         this.serverManager.stopAllServers();
-        this.proxyManager.stopAllProxies();
 
-        this.logger.log(LogType.INFO, "Hydra is now down. See you soon !");
-        System.exit(0);
+        this.scheduler.schedule(this.serverManager::checkIfAllServersHaveShutdown, 1, 0, TimeUnit.MINUTES).andThen(() -> {
+
+            this.proxyManager.stopAllProxies();
+
+            this.scheduler.schedule(this.proxyManager::checkIfAllProxiesHaveShutdown, 1, 0, TimeUnit.MINUTES).andThen(() -> {
+
+                this.logger.log(LogType.INFO, "Shutting down executor service...");
+                this.executorService.shutdown();
+
+                this.dockerAPI.unload();
+
+                this.logger.log(LogType.INFO, "Hydra is now down. See you soon !");
+                System.exit(0);
+            });
+        });
     }
 
     public HydraLogger getLogger() {
@@ -99,5 +112,21 @@ public class Hydra {
 
     public ExecutorService getExecutorService() {
         return this.executorService == null ? this.executorService = Executors.newCachedThreadPool() : this.executorService;
+    }
+
+    public boolean isRunning() {
+        return this.running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
+    }
+
+    public boolean isStopping() {
+        return this.stopping;
+    }
+
+    public void setStopping(boolean stopping) {
+        this.stopping = stopping;
     }
 }

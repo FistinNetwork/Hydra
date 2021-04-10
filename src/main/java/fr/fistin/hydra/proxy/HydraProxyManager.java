@@ -2,15 +2,13 @@ package fr.fistin.hydra.proxy;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.LogType;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -42,7 +40,6 @@ public class HydraProxyManager {
 
     @SuppressWarnings("deprecation")
     public void startProxy(Proxy proxy) {
-        proxy.getOptions().getEnvs().forEach(System.out::println);
         // TODO Multi-proxy with ports
         final PortBinding portBinding = new PortBinding(Ports.Binding.bindIpAndPort("0.0.0.0", 25577), ExposedPort.parse("25565"));
         proxy.setContainer(this.hydra.getDocker().getDockerClient()
@@ -52,8 +49,8 @@ public class HydraProxyManager {
                 .exec()
                 .getId());
         this.hydra.getDocker().getDockerClient().startContainerCmd(proxy.getContainer()).exec();
-        proxy.setProxyIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(proxy.getContainer()).exec().getNetworkSettings().getIpAddress());
         proxy.setStartedTime(System.currentTimeMillis());
+        proxy.setProxyIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(proxy.getContainer()).exec().getNetworkSettings().getIpAddress());
     }
 
     public boolean stopProxy(Proxy proxy) {
@@ -61,14 +58,14 @@ public class HydraProxyManager {
             try {
                 this.hydra.getDocker().getDockerClient().stopContainerCmd(proxy.getContainer()).exec();
                 proxy.setCurrentState(ProxyState.SHUTDOWN);
-                this.removeProxy(proxy);
+
+                if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfProxyHasShutdown(proxy), 1, 0, TimeUnit.MINUTES);
 
                 return true;
             } catch (Exception e) {
                 this.hydra.getLogger().log(LogType.WARN, String.format("Le proxy: %s ne s'est pas stoppé !", proxy.toString()));
             }
         }
-
         return false;
     }
 
@@ -76,8 +73,27 @@ public class HydraProxyManager {
         this.hydra.getLogger().log(LogType.INFO, "Stopping all proxies currently running...");
 
         for (Map.Entry<String, Proxy> entry : this.proxies.entrySet()) {
-            this.stopProxy(entry.getValue());
+            this.hydra.getScheduler().runTaskAsynchronously(() -> this.stopProxy(entry.getValue()));
         }
+    }
+
+    public void checkIfProxyHasShutdown(Proxy proxy) {
+        final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
+        for (Container container : containers) {
+            if (proxy.getContainer().equals(container.getId())) {
+                this.hydra.getLogger().log(LogType.ERROR,  String.format("Le proxy: %s ne s'est pas stoppé !", proxy.toString()));
+                this.hydra.getLogger().log(LogType.INFO,  String.format("Tentative de kill sur le proxy: %s", proxy.toString()));
+                this.hydra.getDocker().getDockerClient().killContainerCmd(proxy.getContainer()).exec();
+            }
+        }
+        if (!this.hydra.isStopping()) this.removeProxy(proxy);
+    }
+
+    public void checkIfAllProxiesHaveShutdown() {
+        for (Map.Entry<String, Proxy> entry : this.proxies.entrySet()) {
+            this.checkIfProxyHasShutdown(entry.getValue());
+        }
+        this.proxies.clear();
     }
 
     public void checkStatus(Proxy proxy) {

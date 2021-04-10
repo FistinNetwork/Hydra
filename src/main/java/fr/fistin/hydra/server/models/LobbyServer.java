@@ -4,6 +4,7 @@ import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.scheduler.HydraTask;
 import fr.fistin.hydra.server.Server;
 import fr.fistin.hydra.server.ServerOptions;
+import fr.fistin.hydra.server.ServerState;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +18,9 @@ public class LobbyServer extends Server {
 
     @Override
     public void start() {
-        this.healthyTask = this.hydra.getScheduler().schedule(this::checkStatus, 2, 2, TimeUnit.MINUTES);
+        this.healthyTask = this.hydra.getScheduler().schedule(() -> {
+            if (this.currentState != ServerState.SHUTDOWN) this.checkStatus();
+        }, 2, 2, TimeUnit.MINUTES);
         super.start();
     }
 

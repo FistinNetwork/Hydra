@@ -7,7 +7,9 @@ import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.LogType;
 
+import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -17,14 +19,26 @@ public class HydraServerManager {
     private final String minecraftServerImageTag = "java8";
 
     private final Map<String, Server> servers;
+    private final Map<String, File> serverDataFolder;
+    private final File dataFolder;
 
     private final Hydra hydra;
 
     public HydraServerManager(Hydra hydra) {
         this.hydra = hydra;
         this.servers = new HashMap<>();
+        this.serverDataFolder = new HashMap<>();
+        this.dataFolder = new File("data");
 
         this.hydra.getLogger().log(LogType.INFO, "Starting server manager...");
+    }
+
+    public void createDataFolder() {
+        if (!this.dataFolder.exists()) {
+            this.hydra.getLogger().log(LogType.INFO, String.format("%s folder didn't exist !", this.dataFolder.getName()));
+            this.hydra.getLogger().log(LogType.INFO, String.format("Creating %s file...!", this.dataFolder.getName()));
+            this.dataFolder.mkdirs();
+        }
     }
 
     public void downloadMinecraftServerImage() {
@@ -49,8 +63,8 @@ public class HydraServerManager {
                 .exec()
                 .getId());
         this.hydra.getDocker().getDockerClient().startContainerCmd(server.getContainer()).exec();
-        server.setServerIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getIpAddress());
         server.setStartedTime(System.currentTimeMillis());
+        server.setServerIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getIpAddress());
     }
 
     public boolean stopServer(Server server) {
@@ -58,11 +72,12 @@ public class HydraServerManager {
             try {
                 this.hydra.getDocker().getDockerClient().stopContainerCmd(server.getContainer()).exec();
                 server.setCurrentState(ServerState.SHUTDOWN);
-                this.removeServer(server);
+
+                if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1, 0, TimeUnit.MINUTES);
 
                 return true;
             } catch (Exception e) {
-                this.hydra.getLogger().log(LogType.WARN, String.format("Le serveur: %s ne s'est pas stoppé !", server.toString()));
+                this.hydra.getLogger().log(LogType.ERROR, String.format("Le serveur: %s ne s'est pas stoppé !", server.toString()));
             }
         }
         return false;
@@ -72,8 +87,27 @@ public class HydraServerManager {
         this.hydra.getLogger().log(LogType.INFO, "Stopping all servers currently running...");
 
         for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
-            this.stopServer(entry.getValue());
+            this.hydra.getScheduler().runTaskAsynchronously(() -> this.stopServer(entry.getValue()));
         }
+    }
+
+    public void checkIfServerHasShutdown(Server server) {
+        final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
+        for (Container container : containers) {
+            if (server.getContainer().equals(container.getId())) {
+                this.hydra.getLogger().log(LogType.ERROR,  String.format("Le serveur: %s ne s'est pas stoppé !", server.toString()));
+                this.hydra.getLogger().log(LogType.INFO,  String.format("Tentative de kill sur le serveur: %s", server.toString()));
+                this.hydra.getDocker().getDockerClient().killContainerCmd(server.getContainer()).exec();
+            }
+        }
+        if (!this.hydra.isStopping()) this.removeServer(server);
+    }
+
+    public void checkIfAllServersHaveShutdown() {
+        for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+            this.checkIfServerHasShutdown(entry.getValue());
+        }
+        this.servers.clear();
     }
 
     public void checkStatus(Server server) {

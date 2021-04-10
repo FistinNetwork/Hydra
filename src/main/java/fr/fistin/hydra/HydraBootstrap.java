@@ -1,6 +1,7 @@
 package fr.fistin.hydra;
 
 import fr.fistin.hydra.server.models.LobbyServer;
+import fr.fistin.hydra.server.models.VanillaServer;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -16,15 +17,19 @@ public class HydraBootstrap {
         final Hydra hydra = new Hydra();
         hydra.start();
 
+        // Test
         final LobbyServer lobbyServer = new LobbyServer(hydra);
         lobbyServer.start();
+
+        final VanillaServer vanillaServer = new VanillaServer(hydra);
+        vanillaServer.start();
 
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
                 hydra.shutdown();
             }
-        }, 15000);
+        }, 5000);
     }
 
 }

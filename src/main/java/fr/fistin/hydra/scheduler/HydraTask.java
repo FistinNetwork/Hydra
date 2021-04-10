@@ -2,8 +2,11 @@ package fr.fistin.hydra.scheduler;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class HydraTask implements Runnable {
+
+    private Runnable then;
 
     private final AtomicBoolean running = new AtomicBoolean(true);
 
@@ -45,11 +48,21 @@ public class HydraTask implements Runnable {
         this.cancel();
     }
 
+    public void andThen(Runnable then) {
+        this.then = then;
+    }
+
     public void cancel() {
         this.scheduler.cancel0(this);
+        this.running.getAndSet(false);
+        if (this.then != null) this.then.run();
     }
 
     public int getId() {
         return this.id;
+    }
+
+    public boolean isRunning() {
+        return this.running.get();
     }
 }
