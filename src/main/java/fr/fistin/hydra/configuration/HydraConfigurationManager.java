@@ -39,7 +39,7 @@ public class HydraConfigurationManager {
 
     private void createConfiguration() throws IOException {
          if (this.configFile.createNewFile()) {
-             this.configuration = new HydraConfiguration();
+             this.configuration = new HydraConfiguration(true, "127.0.0.1", 6379, "pass");
 
              this.hydra.getLogger().log(LogType.INFO, String.format("%s folder didn't exist !", this.configFile.getName()));
              this.hydra.getLogger().log(LogType.INFO, String.format("Creating %s file...!", this.configFile.getName()));

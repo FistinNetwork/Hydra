@@ -18,16 +18,25 @@ public class HydraLogger {
         this.hydra = hydra;
         this.loggerName = loggerName.endsWith(" ") ? loggerName : loggerName + " ";
         this.file = file;
-        if (this.file != null) {
-            try {
-                if (!this.file.exists()){
-                    if (this.file.getParentFile() != null) this.file.getParentFile().mkdirs();
-                    this.file.createNewFile();
+    }
+
+    public void createLogFile() {
+        if (this.hydra.getConfiguration().isLogFile()) {
+            if (this.file != null) {
+                try {
+                    if (!this.file.exists()){
+                        if (this.file.getParentFile() != null) this.file.getParentFile().mkdirs();
+                        this.file.createNewFile();
+                    }
+                    this.writer = new PrintWriter(this.file);
+                    Runtime.getRuntime().addShutdownHook(new Thread(this.writer::close));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-                this.writer = new PrintWriter(this.file);
-                Runtime.getRuntime().addShutdownHook(new Thread(this.writer::close));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            }
+        } else {
+            if (this.file.exists()) {
+                this.file.delete();
             }
         }
     }

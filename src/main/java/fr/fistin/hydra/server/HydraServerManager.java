@@ -19,26 +19,14 @@ public class HydraServerManager {
     private final String minecraftServerImageTag = "java8";
 
     private final Map<String, Server> servers;
-    private final Map<String, File> serverDataFolder;
-    private final File dataFolder;
 
     private final Hydra hydra;
 
     public HydraServerManager(Hydra hydra) {
         this.hydra = hydra;
         this.servers = new HashMap<>();
-        this.serverDataFolder = new HashMap<>();
-        this.dataFolder = new File("data");
 
         this.hydra.getLogger().log(LogType.INFO, "Starting server manager...");
-    }
-
-    public void createDataFolder() {
-        if (!this.dataFolder.exists()) {
-            this.hydra.getLogger().log(LogType.INFO, String.format("%s folder didn't exist !", this.dataFolder.getName()));
-            this.hydra.getLogger().log(LogType.INFO, String.format("Creating %s file...!", this.dataFolder.getName()));
-            this.dataFolder.mkdirs();
-        }
     }
 
     public void downloadMinecraftServerImage() {
@@ -104,6 +92,8 @@ public class HydraServerManager {
     }
 
     public void checkIfAllServersHaveShutdown() {
+        this.hydra.getLogger().log(LogType.INFO, "Checking if all servers have shutdown...");
+
         for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
             this.checkIfServerHasShutdown(entry.getValue());
         }

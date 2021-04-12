@@ -1,5 +1,7 @@
 package fr.fistin.hydra;
 
+import fr.fistin.hydra.packet.HydraPacket;
+import fr.fistin.hydra.packet.PacketReceiver;
 import fr.fistin.hydra.server.models.LobbyServer;
 import fr.fistin.hydra.server.models.VanillaServer;
 
@@ -17,19 +19,10 @@ public class HydraBootstrap {
         final Hydra hydra = new Hydra();
         hydra.start();
 
-        // Test
-        final LobbyServer lobbyServer = new LobbyServer(hydra);
-        lobbyServer.start();
-
-        final VanillaServer vanillaServer = new VanillaServer(hydra);
-        vanillaServer.start();
-
-        new Timer().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                hydra.shutdown();
-            }
-        }, 5000);
+        // Test Packet System
+        hydra.getPacketManager().registerPacket("packet", HydraPacket.class);
+        hydra.getRedisChannelsHandler().registerPacketReceiver("test", packet -> System.out.println(packet.getId()));
+        hydra.getRedisChannelsHandler().sendPacket("test", new HydraPacket("packet"));
     }
 
 }

@@ -90,6 +90,8 @@ public class HydraProxyManager {
     }
 
     public void checkIfAllProxiesHaveShutdown() {
+        this.hydra.getLogger().log(LogType.INFO, "Checking if all proxies have shutdown...");
+
         for (Map.Entry<String, Proxy> entry : this.proxies.entrySet()) {
             this.checkIfProxyHasShutdown(entry.getValue());
         }
