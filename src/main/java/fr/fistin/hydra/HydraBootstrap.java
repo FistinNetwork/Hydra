@@ -1,13 +1,12 @@
 package fr.fistin.hydra;
 
-import fr.fistin.hydra.packet.HydraPacket;
-import fr.fistin.hydra.packet.PacketReceiver;
-import fr.fistin.hydra.server.models.LobbyServer;
-import fr.fistin.hydra.server.models.VanillaServer;
+import fr.fistin.hydra.server.ServerOptions;
+import fr.fistin.hydra.server.template.HydraTemplate;
+import fr.fistin.hydra.server.template.TemplateDependencies;
+import fr.fistin.hydra.server.template.TemplateHydraOptions;
+import fr.fistin.hydra.server.template.TemplateStartingOptions;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
+import java.io.File;
 public class HydraBootstrap {
 
     public static void main(String[] args) {
@@ -19,10 +18,16 @@ public class HydraBootstrap {
         final Hydra hydra = new Hydra();
         hydra.start();
 
-        // Test Packet System
-        hydra.getPacketManager().registerPacket("packet", HydraPacket.class);
-        hydra.getRedisChannelsHandler().registerPacketReceiver("test", packet -> System.out.println(packet.getId()));
-        hydra.getRedisChannelsHandler().sendPacket("test", new HydraPacket("packet"));
-    }
+        // Test
+        hydra.getTemplateManager().createTemplate(
+                new HydraTemplate("lobby", "public",
+                new TemplateStartingOptions(0, 100),
+                new TemplateDependencies("https://fistincdn.blob.core.windows.net/serverdata/lobby/world.zip", "https://fistincdn.blob.core.windows.net/serverdata/lobby/plugins.zip"),
+                new TemplateHydraOptions(10, new ServerOptions(), 1000)),
+                new File("src/main/resources/templates/lobby.yml"));
 
+        final HydraTemplate template = hydra.getTemplateManager().loadTemplateFromFile(new File("src/main/resources/templates/lobby.yml"));
+        System.out.println(template.getName());
+        System.out.println(template.getDependencies().getPluginUrl());
+    }
 }

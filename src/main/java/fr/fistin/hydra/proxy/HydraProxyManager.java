@@ -17,7 +17,7 @@ public class HydraProxyManager {
     private final String minecraftProxyImage = "itzg/bungeecord";
     private final String minecraftProxyImageTag = "latest";
 
-    private final Map<String, Proxy> proxies;
+    private final Map<String, HydraProxy> proxies;
 
     private final Hydra hydra;
 
@@ -39,12 +39,11 @@ public class HydraProxyManager {
     }
 
     @SuppressWarnings("deprecation")
-    public void startProxy(Proxy proxy) {
+    public void startProxy(HydraProxy proxy) {
         // TODO Multi-proxy with ports
-        final PortBinding portBinding = new PortBinding(Ports.Binding.bindIpAndPort("0.0.0.0", 25577), ExposedPort.parse("25565"));
         proxy.setContainer(this.hydra.getDocker().getDockerClient()
                 .createContainerCmd(this.minecraftProxyImage + ":" + this.minecraftProxyImageTag)
-                .withHostConfig(new HostConfig().withAutoRemove(true).withPortBindings(portBinding))
+                .withHostConfig(new HostConfig().withAutoRemove(true))
                 .withName(proxy.toString())
                 .exec()
                 .getId());
@@ -53,7 +52,7 @@ public class HydraProxyManager {
         proxy.setProxyIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(proxy.getContainer()).exec().getNetworkSettings().getIpAddress());
     }
 
-    public boolean stopProxy(Proxy proxy) {
+    public boolean stopProxy(HydraProxy proxy) {
         if (!proxy.getContainer().isEmpty()) {
             try {
                 this.hydra.getDocker().getDockerClient().stopContainerCmd(proxy.getContainer()).exec();
@@ -72,12 +71,12 @@ public class HydraProxyManager {
     public void stopAllProxies() {
         this.hydra.getLogger().log(LogType.INFO, "Stopping all proxies currently running...");
 
-        for (Map.Entry<String, Proxy> entry : this.proxies.entrySet()) {
+        for (Map.Entry<String, HydraProxy> entry : this.proxies.entrySet()) {
             this.hydra.getScheduler().runTaskAsynchronously(() -> this.stopProxy(entry.getValue()));
         }
     }
 
-    public void checkIfProxyHasShutdown(Proxy proxy) {
+    public void checkIfProxyHasShutdown(HydraProxy proxy) {
         final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
         for (Container container : containers) {
             if (proxy.getContainer().equals(container.getId())) {
@@ -92,13 +91,13 @@ public class HydraProxyManager {
     public void checkIfAllProxiesHaveShutdown() {
         this.hydra.getLogger().log(LogType.INFO, "Checking if all proxies have shutdown...");
 
-        for (Map.Entry<String, Proxy> entry : this.proxies.entrySet()) {
+        for (Map.Entry<String, HydraProxy> entry : this.proxies.entrySet()) {
             this.checkIfProxyHasShutdown(entry.getValue());
         }
         this.proxies.clear();
     }
 
-    public void checkStatus(Proxy proxy) {
+    public void checkStatus(HydraProxy proxy) {
         if (!proxy.getContainer().isEmpty()) {
             final InspectContainerResponse.ContainerState containerState = this.hydra.getDocker().getDockerClient()
                     .inspectContainerCmd(proxy.getContainer())
@@ -118,15 +117,15 @@ public class HydraProxyManager {
         }
     }
 
-    public void addProxy(Proxy proxy) {
+    public void addProxy(HydraProxy proxy) {
         this.proxies.put(proxy.toString(), proxy);
     }
 
-    public void removeProxy(Proxy proxy) {
+    public void removeProxy(HydraProxy proxy) {
         this.proxies.remove(proxy.toString());
     }
 
-    public Map<String, Proxy> getProxies() {
+    public Map<String, HydraProxy> getProxies() {
         return this.proxies;
     }
 }

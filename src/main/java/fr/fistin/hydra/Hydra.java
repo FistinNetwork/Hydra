@@ -5,13 +5,16 @@ import fr.fistin.hydra.configuration.HydraConfigurationManager;
 import fr.fistin.hydra.docker.DockerAPI;
 import fr.fistin.hydra.docker.DockerConnector;
 import fr.fistin.hydra.packet.HydraPacketManager;
+import fr.fistin.hydra.packet.channel.HydraChannel;
+import fr.fistin.hydra.packet.receiver.HydraQueryReceiver;
 import fr.fistin.hydra.proxy.HydraProxyManager;
-import fr.fistin.hydra.proxy.Proxy;
+import fr.fistin.hydra.proxy.HydraProxy;
 import fr.fistin.hydra.proxy.ProxyOptions;
 import fr.fistin.hydra.redis.RedisChannelsHandler;
 import fr.fistin.hydra.redis.RedisConnector;
 import fr.fistin.hydra.scheduler.HydraScheduler;
 import fr.fistin.hydra.server.HydraServerManager;
+import fr.fistin.hydra.server.template.HydraTemplateManager;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.HydraLogger;
 import fr.fistin.hydra.util.logger.LogType;
@@ -35,6 +38,7 @@ public class Hydra {
     private final DockerAPI dockerAPI;
     private final DockerConnector docker;
     private final HydraPacketManager packetManager;
+    private final HydraTemplateManager templateManager;
 
     public Hydra() {
         this.logger = new HydraLogger(this, String.format("[%s]", References.HYDRA), new File("latest.log"));
@@ -45,8 +49,9 @@ public class Hydra {
         this.redisConnector = new RedisConnector(this);
         this.redisChannelsHandler = new RedisChannelsHandler(this);
         this.dockerAPI = new DockerAPI(this);
-        this.docker = new DockerConnector(this);
+        this.docker = new DockerConnector();
         this.packetManager = new HydraPacketManager();
+        this.templateManager = new HydraTemplateManager(this);
     }
 
     public void start() {
@@ -55,16 +60,14 @@ public class Hydra {
         this.proxyManager.downloadMinecraftProxyImage();
         this.serverManager.downloadMinecraftServerImage();
         this.redisConnector.connect();
-        this.redisChannelsHandler.subscribe();
 
         // If redis connection failed
         if (!this.stopping) {
+            this.redisChannelsHandler.subscribe();
             this.redisConnector.startReconnectTask();
+            this.registerReceivers();
 
             this.logger.printHeaderMessage();
-
-            // Start a default proxy
-            this.proxyManager.startProxy(new Proxy(this, new ProxyOptions()));
 
             this.running = true;
         }
@@ -97,6 +100,10 @@ public class Hydra {
             System.exit(0);
 
         });
+    }
+
+    private void registerReceivers() {
+        this.redisChannelsHandler.registerPacketReceiver(HydraChannel.QUERY.toString(), new HydraQueryReceiver(this));
     }
 
     public HydraLogger getLogger() {
@@ -141,6 +148,10 @@ public class Hydra {
 
     public HydraPacketManager getPacketManager() {
         return this.packetManager;
+    }
+
+    public HydraTemplateManager getTemplateManager() {
+        return this.templateManager;
     }
 
     public ExecutorService getExecutorService() {

@@ -21,7 +21,7 @@ public class HydraLogger {
     }
 
     public void createLogFile() {
-        if (this.hydra.getConfiguration().isLogFile()) {
+        if (this.hydra.getConfiguration() != null && this.hydra.getConfiguration().isLogFile()) {
             if (this.file != null) {
                 try {
                     if (!this.file.exists()){
@@ -51,7 +51,7 @@ public class HydraLogger {
 
     public void printHeaderMessage() {
        this.log(LogType.INFO,"########################################");
-       this.log(LogType.INFO,"#####           Starting           #####");
+       this.log(LogType.INFO,"#####          Welcome in          #####");
        this.log(LogType.INFO,"#####    Hydra - Fistin Network    #####");
        this.log(LogType.INFO,"##### Authors: Faustin - AstFaster #####");
        this.log(LogType.INFO,"########################################");
@@ -69,7 +69,7 @@ public class HydraLogger {
         if (this.file != null){
             try {
                 if (!this.file.exists()) {
-                    this.file.getParentFile().mkdirs();
+                    if (this.file.getParentFile() != null) this.file.getParentFile().mkdirs();
                     this.file.createNewFile();
                 }
 

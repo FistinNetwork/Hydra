@@ -4,7 +4,7 @@ import fr.fistin.hydra.Hydra;
 
 import java.util.UUID;
 
-public class Proxy {
+public class HydraProxy {
 
     private UUID uuid;
 
@@ -21,7 +21,7 @@ public class Proxy {
 
     private final Hydra hydra;
 
-    public Proxy(Hydra hydra, ProxyOptions options) {
+    public HydraProxy(Hydra hydra, ProxyOptions options) {
         this.hydra = hydra;
         this.uuid = UUID.randomUUID();
         this.options = options;

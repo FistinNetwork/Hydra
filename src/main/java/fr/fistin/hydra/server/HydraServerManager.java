@@ -7,7 +7,7 @@ import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.LogType;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +18,7 @@ public class HydraServerManager {
     private final String minecraftServerImage = "itzg/minecraft-server";
     private final String minecraftServerImageTag = "java8";
 
-    private final Map<String, Server> servers;
+    private final Map<String, HydraServer> servers;
 
     private final Hydra hydra;
 
@@ -40,13 +40,12 @@ public class HydraServerManager {
     }
 
     @SuppressWarnings("deprecation")
-    public void startServer(Server server) {
+    public void startServer(HydraServer server) {
         //TODO Link to Bungeecord
-        final PortBinding portBinding = new PortBinding(Ports.Binding.bindIpAndPort("0.0.0.0", 25565), ExposedPort.parse("25566"));
         server.setContainer(this.hydra.getDocker().getDockerClient()
                 .createContainerCmd(this.minecraftServerImage + ":" + this.minecraftServerImageTag)
                 .withEnv(server.getOptions().getEnv())
-                .withHostConfig(new HostConfig().withAutoRemove(true).withPortBindings(portBinding))
+                .withHostConfig(new HostConfig().withAutoRemove(true))
                 .withName(server.toString())
                 .exec()
                 .getId());
@@ -55,7 +54,7 @@ public class HydraServerManager {
         server.setServerIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getIpAddress());
     }
 
-    public boolean stopServer(Server server) {
+    public boolean stopServer(HydraServer server) {
         if (!server.getContainer().isEmpty()) {
             try {
                 this.hydra.getDocker().getDockerClient().stopContainerCmd(server.getContainer()).exec();
@@ -74,12 +73,12 @@ public class HydraServerManager {
     public void stopAllServers() {
         this.hydra.getLogger().log(LogType.INFO, "Stopping all servers currently running...");
 
-        for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+        for (Map.Entry<String, HydraServer> entry : this.servers.entrySet()) {
             this.hydra.getScheduler().runTaskAsynchronously(() -> this.stopServer(entry.getValue()));
         }
     }
 
-    public void checkIfServerHasShutdown(Server server) {
+    public void checkIfServerHasShutdown(HydraServer server) {
         final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
         for (Container container : containers) {
             if (server.getContainer().equals(container.getId())) {
@@ -94,13 +93,13 @@ public class HydraServerManager {
     public void checkIfAllServersHaveShutdown() {
         this.hydra.getLogger().log(LogType.INFO, "Checking if all servers have shutdown...");
 
-        for (Map.Entry<String, Server> entry : this.servers.entrySet()) {
+        for (Map.Entry<String, HydraServer> entry : this.servers.entrySet()) {
             this.checkIfServerHasShutdown(entry.getValue());
         }
         this.servers.clear();
     }
 
-    public void checkStatus(Server server) {
+    public void checkStatus(HydraServer server) {
         if (!server.getContainer().isEmpty()) {
             final InspectContainerResponse.ContainerState containerState = this.hydra.getDocker().getDockerClient()
                     .inspectContainerCmd(server.getContainer())
@@ -120,19 +119,19 @@ public class HydraServerManager {
         }
     }
 
-    public void addServer(Server server) {
-        this.servers.put(server.toString(), server);
+    public void addServer(HydraServer server) {
+        this.servers.putIfAbsent(server.toString(), server);
     }
 
-    public void removeServer(Server server) {
+    public void removeServer(HydraServer server) {
         this.servers.remove(server.toString());
     }
 
-    public Server getServerByName(String name) {
+    public HydraServer getServerByName(String name) {
         return this.servers.getOrDefault(name, null);
     }
 
-    public Map<String, Server> getServers() {
+    public Map<String, HydraServer> getServers() {
         return this.servers;
     }
 }

@@ -14,16 +14,10 @@ public class DockerConnector {
     private final ApacheDockerHttpClient httpClient;
     private final DockerClient dockerClient;
 
-    public DockerConnector(Hydra hydra, String url) {
-        this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(url).build();
+    public DockerConnector() {
+        this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(DockerUrl.get().getUrl()).build();
         this.httpClient = new ApacheDockerHttpClient.Builder().dockerHost(this.config.getDockerHost()).sslConfig(this.config.getSSLConfig()).build();
         this.dockerClient = DockerClientImpl.getInstance(this.config, this.httpClient);
-
-        hydra.getLogger().log(LogType.INFO, String.format("Successfully connected to Docker ! (Socket: %s)", url));
-    }
-
-    public DockerConnector(Hydra hydra) {
-        this(hydra, DockerUrl.get().getUrl());
     }
 
     public DockerClientConfig getConfig() {

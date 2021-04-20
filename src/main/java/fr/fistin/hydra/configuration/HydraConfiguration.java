@@ -3,9 +3,9 @@ package fr.fistin.hydra.configuration;
 public class HydraConfiguration {
 
     private boolean logFile = true;
-    private String redisIp;
-    private int redisPort;
-    private String redisPassword;
+    private String redisIp = "127.0.0.1";
+    private int redisPort = 6379;
+    private String redisPassword = "";
 
     public HydraConfiguration() {}
 
@@ -14,10 +14,6 @@ public class HydraConfiguration {
         this.redisIp = redisIp;
         this.redisPort = redisPort;
         this.redisPassword = redisPassword;
-    }
-
-    public HydraConfiguration(boolean logFile) {
-        this.logFile = logFile;
     }
 
     public boolean isLogFile() {

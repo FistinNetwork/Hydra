@@ -4,7 +4,7 @@ import fr.fistin.hydra.Hydra;
 
 import java.util.UUID;
 
-public abstract class Server {
+public abstract class HydraServer {
 
     protected UUID uuid;
     protected String type;
@@ -28,7 +28,7 @@ public abstract class Server {
 
     protected final Hydra hydra;
 
-    public Server(Hydra hydra, String type, String mapUrl, String pluginUrl, int slots, ServerOptions options) {
+    public HydraServer(Hydra hydra, String type, String mapUrl, String pluginUrl, int slots, ServerOptions options) {
         this.hydra = hydra;
         this.uuid = UUID.randomUUID();
         this.type = type;

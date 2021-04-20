@@ -1,18 +1,18 @@
 package fr.fistin.hydra.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.util.logger.LogType;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 public class HydraConfigurationManager {
 
     private HydraConfiguration configuration;
-
-    private final ObjectMapper mapper;
 
     private final Hydra hydra;
     private final File configFile;
@@ -20,16 +20,18 @@ public class HydraConfigurationManager {
     public HydraConfigurationManager(Hydra hydra, File configFile) {
         this.hydra = hydra;
         this.configFile = configFile;
-        this.mapper = new ObjectMapper(new YAMLFactory());
     }
 
     public void loadConfiguration() {
         try {
             this.createConfiguration();
 
+            final InputStream inputStream = new FileInputStream(this.configFile);
+            final Yaml yaml = new Yaml(new Constructor(HydraConfiguration.class));
+
             this.hydra.getLogger().log(LogType.INFO, String.format("Loading configuration from %s file...", this.configFile.getName()));
 
-            this.configuration = this.mapper.readValue(this.configFile, HydraConfiguration.class);
+            this.configuration = yaml.load(inputStream);
         } catch (IOException e) {
             this.hydra.getLogger().log(LogType.ERROR, String.format("An error occurred during loading configuration from %s file. Please restart Hydra.", this.configFile.getName()));
             this.configFile.delete();
@@ -39,12 +41,24 @@ public class HydraConfigurationManager {
 
     private void createConfiguration() throws IOException {
          if (this.configFile.createNewFile()) {
-             this.configuration = new HydraConfiguration(true, "127.0.0.1", 6379, "pass");
+             this.configuration = new HydraConfiguration();
 
-             this.hydra.getLogger().log(LogType.INFO, String.format("%s folder didn't exist !", this.configFile.getName()));
+             this.hydra.getLogger().log(LogType.INFO, String.format("%s file didn't exist !", this.configFile.getName()));
              this.hydra.getLogger().log(LogType.INFO, String.format("Creating %s file...!", this.configFile.getName()));
 
-             this.mapper.writeValue(this.configFile, this.configuration);
+             final DumperOptions options = new DumperOptions();
+             options.setIndent(2);
+             options.setPrettyFlow(true);
+             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+
+             final Representer representer = new Representer();
+             representer.addClassTag(HydraConfiguration.class, Tag.MAP);
+
+             final PrintWriter writer = new PrintWriter(this.configFile);
+             final Yaml yaml = new Yaml(representer, options);
+
+             yaml.dump(this.configuration, writer);
+             writer.close();
          }
     }
 

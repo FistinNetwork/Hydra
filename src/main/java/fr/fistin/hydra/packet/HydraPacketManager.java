@@ -8,7 +8,7 @@ public class HydraPacketManager {
     private final Map<String, Class<? extends HydraPacket>> packetClassMap = new HashMap<>();
 
     public void registerPacket(String packetId, Class<? extends HydraPacket> packetClass) {
-        this.packetClassMap.put(packetId, packetClass);
+        this.packetClassMap.putIfAbsent(packetId, packetClass);
     }
 
     public String getPacketIdByClass(Class<? extends HydraPacket> packetClass) {

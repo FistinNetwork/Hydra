@@ -1,6 +1,7 @@
-package fr.fistin.hydra.packet;
+package fr.fistin.hydra.packet.codec;
 
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.packet.HydraPacket;
 import fr.fistin.hydra.util.References;
 
 import java.util.Base64;

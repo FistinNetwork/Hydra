@@ -1,14 +1,14 @@
-package fr.fistin.hydra.server.models;
+package fr.fistin.hydra.server.model;
 
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.scheduler.HydraTask;
-import fr.fistin.hydra.server.Server;
+import fr.fistin.hydra.server.HydraServer;
 import fr.fistin.hydra.server.ServerOptions;
 import fr.fistin.hydra.server.ServerState;
 
 import java.util.concurrent.TimeUnit;
 
-public class LobbyServer extends Server {
+public class LobbyServer extends HydraServer {
 
     private HydraTask healthyTask;
 
