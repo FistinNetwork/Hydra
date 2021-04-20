@@ -3,7 +3,6 @@ package fr.fistin.hydra.server.template;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.util.logger.LogType;
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
@@ -12,13 +11,37 @@ import org.yaml.snakeyaml.representer.Representer;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.*;
 
 public class HydraTemplateManager {
+
+    private final File templatesFolder;
+    private final Map<String, HydraTemplate> templates;
 
     private final Hydra hydra;
 
     public HydraTemplateManager(Hydra hydra) {
         this.hydra = hydra;
+        this.templatesFolder = new File("templates");
+        this.templates = new HashMap<>();
+    }
+
+    public void createTemplatesFolder() {
+        if (!this.templatesFolder.exists()) {
+            this.templatesFolder.mkdirs();
+        }
+    }
+
+    public void loadAllTemplatesFromTemplatesFolder() {
+        final File[] files = this.templatesFolder.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.getName().endsWith(".yml")) {
+                    this.addTemplate(this.loadTemplateFromFile(file));
+                }
+            }
+        }
     }
 
     public HydraTemplate loadTemplateFromFile(File file) {
@@ -42,7 +65,8 @@ public class HydraTemplateManager {
         return yaml.load(this.getUrlContents(url));
     }
 
-    public void createTemplate(HydraTemplate template, File file) {
+    public void createTemplateFile(HydraTemplate template) {
+        final File file = new File(this.templatesFolder.getName() + "/" + template.getName() + ".yml");
         try {
             if (!file.exists()){
                 final DumperOptions options = new DumperOptions();
@@ -66,7 +90,7 @@ public class HydraTemplateManager {
         }
     }
 
-    public String getUrlContents(String url) {
+    private String getUrlContents(String url) {
         final StringBuilder content = new StringBuilder();
 
         try {
@@ -84,4 +108,27 @@ public class HydraTemplateManager {
         return content.toString();
     }
 
+    public void addTemplate(HydraTemplate template) {
+        this.templates.putIfAbsent(template.getName(), template);
+        this.createTemplateFile(template);
+    }
+
+    public void removeTemplate(String name) {
+        this.templates.remove(name);
+
+        final File file = new File(this.templatesFolder.getName() + "/" + name + ".yml");
+        if (file.exists()) file.delete();
+    }
+
+    public HydraTemplate getTemplateByName(String name) {
+        return this.templates.getOrDefault(name, null);
+    }
+
+    public File getTemplatesFolder() {
+        return this.templatesFolder;
+    }
+
+    public Map<String, HydraTemplate> getTemplates() {
+        return this.templates;
+    }
 }

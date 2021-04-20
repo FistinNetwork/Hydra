@@ -5,7 +5,7 @@ public class HydraConfiguration {
     private boolean logFile = true;
     private String redisIp = "127.0.0.1";
     private int redisPort = 6379;
-    private String redisPassword = "";
+    private String redisPassword = "pass";
 
     public HydraConfiguration() {}
 

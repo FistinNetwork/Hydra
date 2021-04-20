@@ -8,8 +8,6 @@ import fr.fistin.hydra.packet.HydraPacketManager;
 import fr.fistin.hydra.packet.channel.HydraChannel;
 import fr.fistin.hydra.packet.receiver.HydraQueryReceiver;
 import fr.fistin.hydra.proxy.HydraProxyManager;
-import fr.fistin.hydra.proxy.HydraProxy;
-import fr.fistin.hydra.proxy.ProxyOptions;
 import fr.fistin.hydra.redis.RedisChannelsHandler;
 import fr.fistin.hydra.redis.RedisConnector;
 import fr.fistin.hydra.scheduler.HydraScheduler;
@@ -20,7 +18,9 @@ import fr.fistin.hydra.util.logger.HydraLogger;
 import fr.fistin.hydra.util.logger.LogType;
 
 import java.io.File;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class Hydra {
 
@@ -57,6 +57,8 @@ public class Hydra {
     public void start() {
         this.configurationManager.loadConfiguration();
         this.logger.createLogFile();
+        this.templateManager.createTemplatesFolder();
+        this.templateManager.loadAllTemplatesFromTemplatesFolder();
         this.proxyManager.downloadMinecraftProxyImage();
         this.serverManager.downloadMinecraftServerImage();
         this.redisConnector.connect();

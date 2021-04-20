@@ -1,12 +1,7 @@
 package fr.fistin.hydra;
 
-import fr.fistin.hydra.server.ServerOptions;
 import fr.fistin.hydra.server.template.HydraTemplate;
-import fr.fistin.hydra.server.template.TemplateDependencies;
-import fr.fistin.hydra.server.template.TemplateHydraOptions;
-import fr.fistin.hydra.server.template.TemplateStartingOptions;
 
-import java.io.File;
 public class HydraBootstrap {
 
     public static void main(String[] args) {
@@ -18,16 +13,22 @@ public class HydraBootstrap {
         final Hydra hydra = new Hydra();
         hydra.start();
 
-        // Test
-        hydra.getTemplateManager().createTemplate(
-                new HydraTemplate("lobby", "public",
-                new TemplateStartingOptions(0, 100),
-                new TemplateDependencies("https://fistincdn.blob.core.windows.net/serverdata/lobby/world.zip", "https://fistincdn.blob.core.windows.net/serverdata/lobby/plugins.zip"),
-                new TemplateHydraOptions(10, new ServerOptions(), 1000)),
-                new File("src/main/resources/templates/lobby.yml"));
+        // TEST
 
-        final HydraTemplate template = hydra.getTemplateManager().loadTemplateFromFile(new File("src/main/resources/templates/lobby.yml"));
-        System.out.println(template.getName());
-        System.out.println(template.getDependencies().getPluginUrl());
+        /*final HydraTemplate lobbyTemplate = new HydraTemplate(
+                "lobby",
+                "public",
+                new TemplateStartingOptions(0, -1),
+                new TemplateDependencies(
+                        "https://fistincdn.blob.core.windows.net/serverdata/lobby/world.zip",
+                        "https://fistincdn.blob.core.windows.net/serverdata/lobby/plugins.zip"),
+                new TemplateHydraOptions(50, new ServerOptions(), 1000));
+
+        hydra.getTemplateManager().addTemplate(lobbyTemplate);*/
+
+        final HydraTemplate lobbyTemplate = hydra.getTemplateManager().getTemplateByName("lobby");
+        System.out.println(lobbyTemplate.getName());
+        System.out.println(lobbyTemplate.getConfidentialityLevel());
+
     }
 }
