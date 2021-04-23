@@ -4,14 +4,14 @@ import fr.fistin.hydra.packet.HydraPacket;
 
 public class StartServerPacket extends HydraPacket {
 
-    private final String type;
+    private final String name;
 
-    public StartServerPacket(String id, String type) {
+    public StartServerPacket(String id, String name) {
         super(id);
-        this.type = type;
+        this.name = name;
     }
 
-    public String getType() {
-        return this.type;
+    public String getName() {
+        return this.name;
     }
 }

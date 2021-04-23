@@ -2,6 +2,7 @@ package fr.fistin.hydra.redis;
 
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.packet.*;
+import fr.fistin.hydra.packet.channel.HydraChannel;
 import fr.fistin.hydra.packet.codec.IPacketDecoder;
 import fr.fistin.hydra.packet.codec.IPacketEncoder;
 import fr.fistin.hydra.packet.codec.PacketDecoder;
@@ -74,6 +75,10 @@ public class RedisChannelsHandler extends JedisPubSub {
         this.subscribe(channel);
 
         this.hydra.getLogger().log(LogType.INFO, String.format("Registered a packet receiver: %s on channel: %s", packetReceiver.getClass().getSimpleName(), channel));
+    }
+
+    public void sendPacket(HydraChannel channel, HydraPacket packet) {
+        this.sendPacket(channel.getName(), packet);
     }
 
     public void sendPacket(String channel, HydraPacket packet) {

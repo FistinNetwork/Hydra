@@ -1,0 +1,18 @@
+confidentialityLevel: private
+dependencies:
+  mapUrl: null
+  pluginUrl: null
+hydraOptions:
+  checkAlive: 1000
+  serverOptions:
+    broadcastAchievements: false
+    difficulty: normal
+    flight: false
+    nether: false
+    pvp: true
+    spawnProtection: 0
+  slots: 50
+name: vanilla
+startingOptions:
+  playersOnNetwork: -1
+  timeToWait: 0

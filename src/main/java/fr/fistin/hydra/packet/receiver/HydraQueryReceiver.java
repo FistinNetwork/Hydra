@@ -3,8 +3,7 @@ package fr.fistin.hydra.packet.receiver;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.packet.HydraPacket;
 import fr.fistin.hydra.packet.model.StartServerPacket;
-import fr.fistin.hydra.server.HydraServer;
-import fr.fistin.hydra.server.model.LobbyServer;
+import fr.fistin.hydra.server.template.HydraTemplate;
 
 public class HydraQueryReceiver implements PacketReceiver {
 
@@ -20,9 +19,8 @@ public class HydraQueryReceiver implements PacketReceiver {
     }
 
     private void handleStartServer(StartServerPacket packet) {
-        System.out.println(packet.getType());
-        final HydraServer server = new LobbyServer(this.hydra);
-        this.hydra.getServerManager().startServer(server);
+        final HydraTemplate template = this.hydra.getTemplateManager().getTemplateByName(packet.getName());
+        this.hydra.getServerManager().startServer(template);
     }
 
 }

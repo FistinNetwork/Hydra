@@ -1,10 +1,11 @@
 package fr.fistin.hydra.server;
 
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.scheduler.HydraTask;
 
 import java.util.UUID;
 
-public abstract class HydraServer {
+public class HydraServer {
 
     protected UUID uuid;
     protected String type;
@@ -26,15 +27,19 @@ public abstract class HydraServer {
 
     protected String container;
 
+    private HydraTask healthyTask;
+    private int checkAlive;
+
     protected final Hydra hydra;
 
-    public HydraServer(Hydra hydra, String type, String mapUrl, String pluginUrl, int slots, ServerOptions options) {
+    public HydraServer(Hydra hydra, String type, String mapUrl, String pluginUrl, int slots, int checkAlive, ServerOptions options) {
         this.hydra = hydra;
         this.uuid = UUID.randomUUID();
         this.type = type;
         this.mapUrl = mapUrl;
         this.pluginUrl = pluginUrl;
         this.slots = slots;
+        this.checkAlive = checkAlive;
         this.options = options;
         this.currentState = ServerState.CREATING;
 
@@ -143,6 +148,22 @@ public abstract class HydraServer {
 
     public void setContainer(String container) {
         this.container = container;
+    }
+
+    public HydraTask getHealthyTask() {
+        return this.healthyTask;
+    }
+
+    public void setHealthyTask(HydraTask healthyTask) {
+        this.healthyTask = healthyTask;
+    }
+
+    public int getCheckAlive() {
+        return this.checkAlive;
+    }
+
+    public void setCheckAlive(int checkAlive) {
+        this.checkAlive = checkAlive;
     }
 
     @Override

@@ -6,14 +6,14 @@ public class TemplateHydraOptions {
 
     private int slots;
     private ServerOptions serverOptions;
-    private int timeout;
+    private int checkAlive;
 
     public TemplateHydraOptions(){}
 
-    public TemplateHydraOptions(int slots, ServerOptions serverOptions, int timeout) {
+    public TemplateHydraOptions(int slots, ServerOptions serverOptions, int checkAlive) {
         this.slots = slots;
         this.serverOptions = serverOptions;
-        this.timeout = timeout;
+        this.checkAlive = checkAlive;
     }
 
     public int getSlots() {
@@ -32,11 +32,12 @@ public class TemplateHydraOptions {
         this.serverOptions = serverOptions;
     }
 
-    public int getTimeout() {
-        return this.timeout;
+    public int getCheckAlive() {
+        return this.checkAlive;
     }
 
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
+    public void setCheckAlive(int checkAlive) {
+        this.checkAlive = checkAlive;
     }
+
 }

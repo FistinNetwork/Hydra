@@ -4,6 +4,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.server.template.HydraTemplate;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.LogType;
 
@@ -52,6 +53,20 @@ public class HydraServerManager {
         this.hydra.getDocker().getDockerClient().startContainerCmd(server.getContainer()).exec();
         server.setStartedTime(System.currentTimeMillis());
         server.setServerIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getIpAddress());
+        server.setHealthyTask(this.hydra.getScheduler().schedule(() ->  {
+            if (server.getCurrentState() != ServerState.SHUTDOWN) server.checkStatus();
+        }, server.getCheckAlive(), server.getCheckAlive(), TimeUnit.MILLISECONDS));
+    }
+
+    public void startServer(HydraTemplate template) {
+        final HydraServer server = new HydraServer(
+                this.hydra, template.getName(),
+                template.getDependencies().getMapUrl(),
+                template.getDependencies().getPluginUrl(),
+                template.getHydraOptions().getSlots(),
+                template.getHydraOptions().getCheckAlive(),
+                template.getHydraOptions().getServerOptions());
+        this.hydra.getScheduler().schedule(() -> this.startServer(server), template.getStartingOptions().getTimeToWait(), TimeUnit.MILLISECONDS);
     }
 
     public boolean stopServer(HydraServer server) {
@@ -59,12 +74,13 @@ public class HydraServerManager {
             try {
                 this.hydra.getDocker().getDockerClient().stopContainerCmd(server.getContainer()).exec();
                 server.setCurrentState(ServerState.SHUTDOWN);
+                this.hydra.getScheduler().cancel(server.getHealthyTask().getId());
 
                 if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1, 0, TimeUnit.MINUTES);
 
                 return true;
             } catch (Exception e) {
-                this.hydra.getLogger().log(LogType.ERROR, String.format("Le serveur: %s ne s'est pas stoppé !", server.toString()));
+                this.hydra.getLogger().log(LogType.ERROR, String.format("The server: %s didn't stopped !", server.toString()));
             }
         }
         return false;
@@ -82,8 +98,8 @@ public class HydraServerManager {
         final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
         for (Container container : containers) {
             if (server.getContainer().equals(container.getId())) {
-                this.hydra.getLogger().log(LogType.ERROR,  String.format("Le serveur: %s ne s'est pas stoppé !", server.toString()));
-                this.hydra.getLogger().log(LogType.INFO,  String.format("Tentative de kill sur le serveur: %s", server.toString()));
+                this.hydra.getLogger().log(LogType.ERROR,  String.format("The server: %s didn't stopped !", server.toString()));
+                this.hydra.getLogger().log(LogType.INFO,  String.format("Trying to kill the server: %s", server.toString()));
                 this.hydra.getDocker().getDockerClient().killContainerCmd(server.getContainer()).exec();
             }
         }

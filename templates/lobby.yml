@@ -1,0 +1,18 @@
+confidentialityLevel: public
+dependencies:
+  mapUrl: https://fistincdn.blob.core.windows.net/serverdata/lobby/world.zip
+  pluginUrl: https://fistincdn.blob.core.windows.net/serverdata/lobby/plugins.zip
+hydraOptions:
+  checkAlive: 1000
+  serverOptions:
+    broadcastAchievements: false
+    difficulty: normal
+    flight: false
+    nether: false
+    pvp: true
+    spawnProtection: 0
+  slots: 10
+name: lobby
+startingOptions:
+  playersOnNetwork: -1
+  timeToWait: 5000

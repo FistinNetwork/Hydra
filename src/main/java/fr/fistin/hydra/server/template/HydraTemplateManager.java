@@ -28,6 +28,7 @@ public class HydraTemplateManager {
 
     public void createTemplatesFolder() {
         if (!this.templatesFolder.exists()) {
+            this.hydra.getLogger().log(LogType.INFO, String.format("%s folder doesn't exist ! Creating it...", this.templatesFolder.getName()));
             this.templatesFolder.mkdirs();
         }
     }
@@ -38,13 +39,14 @@ public class HydraTemplateManager {
         if (files != null) {
             for (File file : files) {
                 if (file.getName().endsWith(".yml")) {
-                    this.addTemplate(this.loadTemplateFromFile(file));
+                    final HydraTemplate template = this.loadTemplate(file);
+                    this.templates.putIfAbsent(template.getName(), template);
                 }
             }
         }
     }
 
-    public HydraTemplate loadTemplateFromFile(File file) {
+    public HydraTemplate loadTemplate(File file) {
         HydraTemplate template = null;
         try {
             final InputStream inputStream = new FileInputStream(file);
@@ -59,7 +61,7 @@ public class HydraTemplateManager {
         return template;
     }
 
-    public HydraTemplate loadTemplateFromUrl(String url) {
+    public HydraTemplate loadTemplate(String url) {
         final Yaml yaml = new Yaml(new Constructor(HydraTemplate.class));
 
         return yaml.load(this.getUrlContents(url));
@@ -81,6 +83,8 @@ public class HydraTemplateManager {
                 final Yaml yaml = new Yaml(representer, options);
 
                 yaml.dump(template, writer);
+
+                this.hydra.getLogger().log(LogType.INFO, String.format("Successfully created %s template !", template.getName()));
             } else {
                 this.hydra.getLogger().log(LogType.ERROR, String.format("%s file already exists !", file.getName()));
             }
