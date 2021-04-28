@@ -4,6 +4,9 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.packet.channel.HydraChannel;
+import fr.fistin.hydra.packet.model.event.ServerStartedPacket;
+import fr.fistin.hydra.packet.model.event.ServerStoppedPacket;
 import fr.fistin.hydra.server.template.HydraTemplate;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.LogType;
@@ -42,20 +45,28 @@ public class HydraServerManager {
 
     @SuppressWarnings("deprecation")
     public void startServer(HydraServer server) {
-        //TODO Link to Bungeecord
+        final List<String> env = server.getOptions().getEnv();
+        if (server.getMapUrl() != null) env.add("WORLD=" + server.getMapUrl());
+        if (server.getPluginUrl() != null) env.add("MODPACK=" +  server.getPluginUrl());
+
         server.setContainer(this.hydra.getDocker().getDockerClient()
                 .createContainerCmd(this.minecraftServerImage + ":" + this.minecraftServerImageTag)
-                .withEnv(server.getOptions().getEnv())
+                .withEnv(env)
                 .withHostConfig(new HostConfig().withAutoRemove(true))
                 .withName(server.toString())
                 .exec()
                 .getId());
+
         this.hydra.getDocker().getDockerClient().startContainerCmd(server.getContainer()).exec();
+
         server.setStartedTime(System.currentTimeMillis());
         server.setServerIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getIpAddress());
+
         server.setHealthyTask(this.hydra.getScheduler().schedule(() ->  {
             if (server.getCurrentState() != ServerState.SHUTDOWN) server.checkStatus();
         }, server.getCheckAlive(), server.getCheckAlive(), TimeUnit.MILLISECONDS));
+
+        this.hydra.getRedisChannelsHandler().sendPacket(HydraChannel.EVENT, new ServerStartedPacket("ServerStarted", server.toString(), server.getType()));
     }
 
     public void startServer(HydraTemplate template) {
@@ -66,6 +77,7 @@ public class HydraServerManager {
                 template.getHydraOptions().getSlots(),
                 template.getHydraOptions().getCheckAlive(),
                 template.getHydraOptions().getServerOptions());
+
         this.hydra.getScheduler().schedule(() -> this.startServer(server), template.getStartingOptions().getTimeToWait(), TimeUnit.MILLISECONDS);
     }
 
@@ -76,7 +88,9 @@ public class HydraServerManager {
                 server.setCurrentState(ServerState.SHUTDOWN);
                 this.hydra.getScheduler().cancel(server.getHealthyTask().getId());
 
-                if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1, 0, TimeUnit.MINUTES);
+                if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1,  TimeUnit.MINUTES);
+
+                this.hydra.getRedisChannelsHandler().sendPacket(HydraChannel.EVENT, new ServerStoppedPacket("ServerStopped", server.toString(), server.getType()));
 
                 return true;
             } catch (Exception e) {

@@ -19,6 +19,7 @@ public class RedisChannelsHandler extends JedisPubSub {
     private boolean loop;
 
     private final Map<String, Set<PacketReceiver>> packetReceivers;
+    private final List<HydraPacket> packetAwaitingResponse;
     private final IPacketDecoder packetDecoder;
     private final IPacketEncoder packetEncoder;
 
@@ -27,6 +28,7 @@ public class RedisChannelsHandler extends JedisPubSub {
     public RedisChannelsHandler(Hydra hydra) {
         this.hydra = hydra;
         this.packetReceivers = new HashMap<>();
+        this.packetAwaitingResponse = new ArrayList<>();
         this.packetDecoder = new PacketDecoder(this.hydra);
         this.packetEncoder = new PacketEncoder();
         this.loop = true;
@@ -65,6 +67,10 @@ public class RedisChannelsHandler extends JedisPubSub {
         this.punsubscribe();
     }
 
+    public void registerPacketReceiver(HydraChannel channel, PacketReceiver packetReceiver) {
+        this.registerPacketReceiver(channel.getName(), packetReceiver);
+    }
+
     public void registerPacketReceiver(String channel, PacketReceiver packetReceiver) {
         Set<PacketReceiver> receivers = this.packetReceivers.get(channel);
 
@@ -85,6 +91,11 @@ public class RedisChannelsHandler extends JedisPubSub {
         final Jedis jedis = this.hydra.getRedisConnector().getResource();
 
         jedis.publish(channel, this.packetEncoder.encode(packet));
+
+        if (!channel.equals(HydraChannel.EVENT.getName())) {
+            this.packetAwaitingResponse.add(packet);
+        }
+
         jedis.close();
     }
 
@@ -101,4 +112,7 @@ public class RedisChannelsHandler extends JedisPubSub {
         }
     }
 
+    public List<HydraPacket> getPacketAwaitingResponse() {
+        return this.packetAwaitingResponse;
+    }
 }

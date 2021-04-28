@@ -6,6 +6,9 @@ import fr.fistin.hydra.docker.DockerAPI;
 import fr.fistin.hydra.docker.DockerConnector;
 import fr.fistin.hydra.packet.HydraPacketManager;
 import fr.fistin.hydra.packet.channel.HydraChannel;
+import fr.fistin.hydra.packet.model.event.ServerStartedPacket;
+import fr.fistin.hydra.packet.model.event.ServerStoppedPacket;
+import fr.fistin.hydra.packet.model.query.StartServerPacket;
 import fr.fistin.hydra.packet.receiver.HydraQueryReceiver;
 import fr.fistin.hydra.proxy.HydraProxyManager;
 import fr.fistin.hydra.redis.RedisChannelsHandler;
@@ -67,6 +70,7 @@ public class Hydra {
         if (!this.stopping) {
             this.redisChannelsHandler.subscribe();
             this.redisConnector.startReconnectTask();
+            this.registerPackets();
             this.registerReceivers();
 
             this.logger.printHeaderMessage();
@@ -90,8 +94,8 @@ public class Hydra {
 
         }, 1, 0, TimeUnit.MINUTES).andThen(() -> {
 
-            this.redisConnector.disconnect();
             this.redisChannelsHandler.stop();
+            this.redisConnector.disconnect();
 
             this.logger.log(LogType.INFO, "Shutting down executor service...");
             this.executorService.shutdown();
@@ -104,8 +108,15 @@ public class Hydra {
         });
     }
 
+    private void registerPackets() {
+        this.packetManager.registerPacket("StartServer", StartServerPacket.class);
+        this.packetManager.registerPacket("StopServer", StartServerPacket.class);
+        this.packetManager.registerPacket("ServerStarted", ServerStartedPacket.class);
+        this.packetManager.registerPacket("ServerStopped", ServerStoppedPacket.class);
+    }
+
     private void registerReceivers() {
-        this.redisChannelsHandler.registerPacketReceiver(HydraChannel.QUERY.toString(), new HydraQueryReceiver(this));
+        this.redisChannelsHandler.registerPacketReceiver(HydraChannel.QUERY, new HydraQueryReceiver(this));
     }
 
     public HydraLogger getLogger() {

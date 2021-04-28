@@ -18,7 +18,7 @@ public class PacketDecoder implements IPacketDecoder {
     public HydraPacket decode(String message) {
         final Base64.Decoder decoder = Base64.getDecoder();
         final String json = new String(decoder.decode(message));
-        final Class<? extends HydraPacket> packetClass = this.hydra.getPacketManager().getPacketClassById(References.GSON.fromJson(json, HydraPacket.class).getId());
+        final Class<? extends HydraPacket> packetClass = this.hydra.getPacketManager().getPacketClassByType(References.GSON.fromJson(json, HydraPacket.class).getType());
 
         if (packetClass != null) {
             return References.GSON.fromJson(json, packetClass);

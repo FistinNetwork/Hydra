@@ -1,7 +1,7 @@
 confidentialityLevel: public
 dependencies:
   mapUrl: https://fistincdn.blob.core.windows.net/serverdata/lobby/world.zip
-  pluginUrl: https://fistincdn.blob.core.windows.net/serverdata/lobby/plugins.zip
+  pluginUrl: null
 hydraOptions:
   checkAlive: 1000
   serverOptions:
@@ -15,4 +15,4 @@ hydraOptions:
 name: lobby
 startingOptions:
   playersOnNetwork: -1
-  timeToWait: 5000
+  timeToWait: 0
