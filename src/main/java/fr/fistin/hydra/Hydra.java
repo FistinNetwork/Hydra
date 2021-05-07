@@ -4,15 +4,17 @@ import fr.fistin.hydra.configuration.HydraConfiguration;
 import fr.fistin.hydra.configuration.HydraConfigurationManager;
 import fr.fistin.hydra.docker.DockerAPI;
 import fr.fistin.hydra.docker.DockerConnector;
-import fr.fistin.hydra.packet.HydraPacketManager;
-import fr.fistin.hydra.packet.channel.HydraChannel;
-import fr.fistin.hydra.packet.model.event.ServerStartedPacket;
-import fr.fistin.hydra.packet.model.event.ServerStoppedPacket;
-import fr.fistin.hydra.packet.model.query.StartServerPacket;
-import fr.fistin.hydra.packet.receiver.HydraQueryReceiver;
+import fr.fistin.hydra.query.HydraQueryReceiver;
+import fr.fistin.hydraconnector.HydraConnector;
+import fr.fistin.hydraconnector.protocol.HydraProtocol;
+import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
+import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
+import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
+import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
+import fr.fistin.hydraconnector.protocol.packet.server.StartServerPacket;
 import fr.fistin.hydra.proxy.HydraProxyManager;
-import fr.fistin.hydra.redis.RedisChannelsHandler;
-import fr.fistin.hydra.redis.RedisConnector;
+import fr.fistin.hydraconnector.redis.RedisHandler;
+import fr.fistin.hydraconnector.redis.RedisConnection;
 import fr.fistin.hydra.scheduler.HydraScheduler;
 import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.server.template.HydraTemplateManager;
@@ -31,16 +33,15 @@ public class Hydra {
     private boolean running = false;
     private boolean stopping = false;
 
+    private HydraConnector hydraConnector;
+
     private final HydraLogger logger;
     private final HydraConfigurationManager configurationManager;
     private final HydraScheduler scheduler;
     private final HydraProxyManager proxyManager;
     private final HydraServerManager serverManager;
-    private final RedisConnector redisConnector;
-    private final RedisChannelsHandler redisChannelsHandler;
     private final DockerAPI dockerAPI;
     private final DockerConnector docker;
-    private final HydraPacketManager packetManager;
     private final HydraTemplateManager templateManager;
 
     public Hydra() {
@@ -49,28 +50,26 @@ public class Hydra {
         this.scheduler = new HydraScheduler(this);
         this.proxyManager = new HydraProxyManager(this);
         this.serverManager = new HydraServerManager(this);
-        this.redisConnector = new RedisConnector(this);
-        this.redisChannelsHandler = new RedisChannelsHandler(this);
         this.dockerAPI = new DockerAPI(this);
         this.docker = new DockerConnector();
-        this.packetManager = new HydraPacketManager();
         this.templateManager = new HydraTemplateManager(this);
     }
 
     public void start() {
         this.configurationManager.loadConfiguration();
+
+        this.hydraConnector = new HydraConnector(References.GSON, this.getConfiguration().getRedisIp(), this.getConfiguration().getRedisPort(), this.getConfiguration().getRedisPassword());
+
         this.logger.createLogFile();
         this.templateManager.createTemplatesFolder();
         this.templateManager.loadAllTemplatesFromTemplatesFolder();
         this.proxyManager.downloadMinecraftProxyImage();
         this.serverManager.downloadMinecraftServerImage();
-        this.redisConnector.connect();
+        if (!this.hydraConnector.connectToRedis()) this.stopping = true;
 
         // If redis connection failed
         if (!this.stopping) {
-            this.redisChannelsHandler.subscribe();
-            this.redisConnector.startReconnectTask();
-            this.registerPackets();
+            this.hydraConnector.startPacketHandler();
             this.registerReceivers();
 
             this.logger.printHeaderMessage();
@@ -94,8 +93,8 @@ public class Hydra {
 
         }, 1, 0, TimeUnit.MINUTES).andThen(() -> {
 
-            this.redisChannelsHandler.stop();
-            this.redisConnector.disconnect();
+            this.hydraConnector.getRedisHandler().stop();
+            this.hydraConnector.getRedisConnection().disconnect();
 
             this.logger.log(LogType.INFO, "Shutting down executor service...");
             this.executorService.shutdown();
@@ -108,15 +107,16 @@ public class Hydra {
         });
     }
 
-    private void registerPackets() {
-        this.packetManager.registerPacket("StartServer", StartServerPacket.class);
-        this.packetManager.registerPacket("StopServer", StartServerPacket.class);
-        this.packetManager.registerPacket("ServerStarted", ServerStartedPacket.class);
-        this.packetManager.registerPacket("ServerStopped", ServerStoppedPacket.class);
+    private void registerReceivers() {
+        this.hydraConnector.getRedisHandler().registerPacketReceiver(HydraChannel.QUERY, new HydraQueryReceiver(this));
     }
 
-    private void registerReceivers() {
-        this.redisChannelsHandler.registerPacketReceiver(HydraChannel.QUERY, new HydraQueryReceiver(this));
+    public void sendPacket(HydraChannel channel, HydraPacket packet) {
+        this.hydraConnector.getConnectionManager().sendPacket(channel, packet);
+    }
+
+    public void sendPacket(String channel, HydraPacket packet) {
+        this.hydraConnector.getConnectionManager().sendPacket(channel, packet);
     }
 
     public HydraLogger getLogger() {
@@ -143,24 +143,12 @@ public class Hydra {
         return this.serverManager;
     }
 
-    public RedisConnector getRedisConnector() {
-        return this.redisConnector;
-    }
-
-    public RedisChannelsHandler getRedisChannelsHandler() {
-        return this.redisChannelsHandler;
-    }
-
     public DockerAPI getDockerAPI() {
         return this.dockerAPI;
     }
 
     public DockerConnector getDocker() {
         return this.docker;
-    }
-
-    public HydraPacketManager getPacketManager() {
-        return this.packetManager;
     }
 
     public HydraTemplateManager getTemplateManager() {

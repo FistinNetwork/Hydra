@@ -1,6 +1,6 @@
 confidentialityLevel: public
 dependencies:
-  mapUrl: https://fistincdn.blob.core.windows.net/serverdata/lobby/world.zip
+  mapUrl: null
   pluginUrl: null
 hydraOptions:
   checkAlive: 1000

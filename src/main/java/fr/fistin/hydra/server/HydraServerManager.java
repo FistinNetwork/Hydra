@@ -4,14 +4,13 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.packet.channel.HydraChannel;
-import fr.fistin.hydra.packet.model.event.ServerStartedPacket;
-import fr.fistin.hydra.packet.model.event.ServerStoppedPacket;
+import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
+import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
+import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
 import fr.fistin.hydra.server.template.HydraTemplate;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.LogType;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,7 @@ public class HydraServerManager {
             if (server.getCurrentState() != ServerState.SHUTDOWN) server.checkStatus();
         }, server.getCheckAlive(), server.getCheckAlive(), TimeUnit.MILLISECONDS));
 
-        this.hydra.getRedisChannelsHandler().sendPacket(HydraChannel.EVENT, new ServerStartedPacket("ServerStarted", server.toString(), server.getType()));
+        this.hydra.sendPacket(HydraChannel.EVENT, new ServerStartedPacket(server.toString(), server.getType()));
     }
 
     public void startServer(HydraTemplate template) {
@@ -90,7 +89,7 @@ public class HydraServerManager {
 
                 if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1,  TimeUnit.MINUTES);
 
-                this.hydra.getRedisChannelsHandler().sendPacket(HydraChannel.EVENT, new ServerStoppedPacket("ServerStopped", server.toString(), server.getType()));
+                this.hydra.sendPacket(HydraChannel.EVENT, new ServerStoppedPacket(server.toString(), server.getType()));
 
                 return true;
             } catch (Exception e) {
@@ -112,8 +111,8 @@ public class HydraServerManager {
         final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
         for (Container container : containers) {
             if (server.getContainer().equals(container.getId())) {
-                this.hydra.getLogger().log(LogType.ERROR,  String.format("The server: %s didn't stopped !", server.toString()));
-                this.hydra.getLogger().log(LogType.INFO,  String.format("Trying to kill the server: %s", server.toString()));
+                this.hydra.getLogger().log(LogType.ERROR,  String.format("The server: %s didn't stopped !", server));
+                this.hydra.getLogger().log(LogType.INFO,  String.format("Trying to kill the server: %s", server));
                 this.hydra.getDocker().getDockerClient().killContainerCmd(server.getContainer()).exec();
             }
         }

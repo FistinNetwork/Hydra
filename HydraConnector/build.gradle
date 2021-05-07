@@ -1,0 +1,23 @@
+
+apply plugin: 'idea'
+apply plugin: 'java-library'
+
+group 'fr.fistin'
+version '1.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'redis.clients:jedis:3.5.2'
+    api 'com.google.code.gson:gson:2.8.6'
+}
+
+jar {
+    manifest {
+        attributes([
+                'Automatic-Module-Name': 'hydra-connector'
+        ])
+    }
+}

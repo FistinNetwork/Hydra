@@ -1,7 +1,7 @@
 package fr.fistin.hydra;
 
-import fr.fistin.hydra.packet.channel.HydraChannel;
-import fr.fistin.hydra.packet.model.query.StartServerPacket;
+import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
+import fr.fistin.hydraconnector.protocol.packet.server.StartServerPacket;
 
 public class HydraBootstrap {
 
@@ -15,6 +15,6 @@ public class HydraBootstrap {
         hydra.start();
 
         // Personal test of Hydra
-        hydra.getRedisChannelsHandler().sendPacket(HydraChannel.QUERY, new StartServerPacket("StartServer", "lobby"));
+        hydra.sendPacket(HydraChannel.QUERY, new StartServerPacket("vanilla"));
     }
 }

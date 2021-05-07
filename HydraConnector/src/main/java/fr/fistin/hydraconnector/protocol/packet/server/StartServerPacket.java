@@ -1,13 +1,12 @@
-package fr.fistin.hydra.packet.model.query;
+package fr.fistin.hydraconnector.protocol.packet.server;
 
-import fr.fistin.hydra.packet.HydraPacket;
+import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
 
 public class StartServerPacket extends HydraPacket {
 
     private final String templateName;
 
-    public StartServerPacket(String type, String templateName) {
-        super(type);
+    public StartServerPacket(String templateName) {
         this.templateName = templateName;
     }
 

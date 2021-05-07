@@ -1,12 +1,13 @@
-package fr.fistin.hydra.packet.receiver;
+package fr.fistin.hydra.query;
 
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.packet.HydraPacket;
-import fr.fistin.hydra.packet.model.query.StartServerPacket;
-import fr.fistin.hydra.packet.model.query.StopServerPacket;
 import fr.fistin.hydra.server.template.HydraTemplate;
+import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
+import fr.fistin.hydraconnector.protocol.packet.server.StartServerPacket;
+import fr.fistin.hydraconnector.protocol.packet.server.StopServerPacket;
+import fr.fistin.hydraconnector.protocol.receiver.HydraPacketReceiver;
 
-public class HydraQueryReceiver implements PacketReceiver {
+public class HydraQueryReceiver implements HydraPacketReceiver {
 
     private final Hydra hydra;
 
@@ -26,7 +27,6 @@ public class HydraQueryReceiver implements PacketReceiver {
     }
 
     private void handleStopServer(StopServerPacket packet) {
-        this.hydra.getServerManager().getServerByName(packet.getServerName()).stop();
+        this.hydra.getServerManager().getServerByName(packet.getServerId()).stop();
     }
-
 }

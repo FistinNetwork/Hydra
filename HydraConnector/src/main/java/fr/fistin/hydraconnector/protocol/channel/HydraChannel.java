@@ -1,9 +1,11 @@
-package fr.fistin.hydra.packet.channel;
+package fr.fistin.hydraconnector.protocol.channel;
 
 public enum HydraChannel {
 
+    DEFAULT("Hydra"),
     SERVERS("HydraServers"),
     QUERY("HydraQuery"),
+    PROXIES("HydraProxies"),
     EVENT("HydraEvent");
 
     private final String name;
