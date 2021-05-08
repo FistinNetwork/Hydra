@@ -9,12 +9,12 @@ import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
 import fr.fistin.hydra.server.template.HydraTemplate;
 import fr.fistin.hydra.util.References;
-import fr.fistin.hydra.util.logger.LogType;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class HydraServerManager {
 
@@ -28,16 +28,14 @@ public class HydraServerManager {
     public HydraServerManager(Hydra hydra) {
         this.hydra = hydra;
         this.servers = new HashMap<>();
-
-        this.hydra.getLogger().log(LogType.INFO, "Starting server manager...");
     }
 
     public void downloadMinecraftServerImage() {
         try {
-            this.hydra.getLogger().log(LogType.INFO, String.format("Pulling %s:%s image... (this might take few minutes)", this.minecraftServerImage, this.minecraftServerImageTag));
+            this.hydra.getLogger().log(Level.INFO, String.format("Pulling %s:%s image... (this might take few minutes)", this.minecraftServerImage, this.minecraftServerImageTag));
             this.hydra.getDocker().getDockerClient().pullImageCmd(this.minecraftServerImage).withTag(this.minecraftServerImageTag).exec(new PullImageResultCallback()).awaitCompletion(60, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            this.hydra.getLogger().log(LogType.ERROR, String.format("%s encountered an exception during download image: %s. Cause: %s", References.HYDRA, this.minecraftServerImage + ":" + this.minecraftServerImageTag, e.getMessage()));
+            this.hydra.getLogger().log(Level.SEVERE, String.format("%s encountered an exception during download image: %s. Cause: %s", References.HYDRA, this.minecraftServerImage + ":" + this.minecraftServerImageTag, e.getMessage()));
             this.hydra.shutdown();
         }
     }
@@ -65,6 +63,8 @@ public class HydraServerManager {
             if (server.getCurrentState() != ServerState.SHUTDOWN) server.checkStatus();
         }, server.getCheckAlive(), server.getCheckAlive(), TimeUnit.MILLISECONDS));
 
+        System.out.println("Started " + server + " server");
+
         this.hydra.sendPacket(HydraChannel.EVENT, new ServerStartedPacket(server.toString(), server.getType()));
     }
 
@@ -91,16 +91,18 @@ public class HydraServerManager {
 
                 this.hydra.sendPacket(HydraChannel.EVENT, new ServerStoppedPacket(server.toString(), server.getType()));
 
+                System.out.println("Stopped " + server + " server. (Checking if really in 1 minutes if Hydra is not stopping)");
+
                 return true;
             } catch (Exception e) {
-                this.hydra.getLogger().log(LogType.ERROR, String.format("The server: %s didn't stopped !", server.toString()));
+                this.hydra.getLogger().log(Level.SEVERE, String.format("The server: %s didn't stopped !", server));
             }
         }
         return false;
     }
 
     public void stopAllServers() {
-        this.hydra.getLogger().log(LogType.INFO, "Stopping all servers currently running...");
+        this.hydra.getLogger().log(Level.INFO, "Stopping all servers currently running...");
 
         for (Map.Entry<String, HydraServer> entry : this.servers.entrySet()) {
             this.hydra.getScheduler().runTaskAsynchronously(() -> this.stopServer(entry.getValue()));
@@ -111,8 +113,8 @@ public class HydraServerManager {
         final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
         for (Container container : containers) {
             if (server.getContainer().equals(container.getId())) {
-                this.hydra.getLogger().log(LogType.ERROR,  String.format("The server: %s didn't stopped !", server));
-                this.hydra.getLogger().log(LogType.INFO,  String.format("Trying to kill the server: %s", server));
+                this.hydra.getLogger().log(Level.SEVERE,  String.format("The server: %s didn't stopped !", server));
+                this.hydra.getLogger().log(Level.INFO,  String.format("Trying to kill the server: %s", server));
                 this.hydra.getDocker().getDockerClient().killContainerCmd(server.getContainer()).exec();
             }
         }
@@ -120,7 +122,7 @@ public class HydraServerManager {
     }
 
     public void checkIfAllServersHaveShutdown() {
-        this.hydra.getLogger().log(LogType.INFO, "Checking if all servers have shutdown...");
+        this.hydra.getLogger().log(Level.INFO, "Checking if all servers have shutdown...");
 
         for (Map.Entry<String, HydraServer> entry : this.servers.entrySet()) {
             this.checkIfServerHasShutdown(entry.getValue());

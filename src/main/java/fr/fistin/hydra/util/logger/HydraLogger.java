@@ -2,94 +2,58 @@ package fr.fistin.hydra.util.logger;
 
 import fr.fistin.hydra.Hydra;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.logging.*;
 
-public class HydraLogger {
+public class HydraLogger extends Logger {
 
-    private String loggerName;
-    private File file;
-    private PrintWriter writer;
+    private final LogDispatcher dispatcher = new LogDispatcher(this);
 
-    private final Hydra hydra;
+    @SuppressWarnings( { "CallToPrintStackTrace", "CallToThreadStartDuringObjectConstruction" } )
+    public HydraLogger(Hydra hydra, String name, String filePattern) {
+        super(name, null);
+        this.setLevel(Level.ALL);
 
-    public HydraLogger(Hydra hydra, String loggerName, File file){
-        this.hydra = hydra;
-        this.loggerName = loggerName.endsWith(" ") ? loggerName : loggerName + " ";
-        this.file = file;
-    }
+        try {
+            final FileHandler fileHandler = new FileHandler(filePattern);
+            fileHandler.setFormatter(new ConciseFormatter(this, false));
+            this.addHandler(fileHandler);
 
-    public void createLogFile() {
-        if (this.hydra.getConfiguration() != null && this.hydra.getConfiguration().isLogFile()) {
-            if (this.file != null) {
-                try {
-                    if (!this.file.exists()){
-                        if (this.file.getParentFile() != null) this.file.getParentFile().mkdirs();
-                        this.file.createNewFile();
-                    }
-                    this.writer = new PrintWriter(this.file);
-                    Runtime.getRuntime().addShutdownHook(new Thread(this.writer::close));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        } else {
-            if (this.file.exists()) {
-                this.file.delete();
-            }
+
+            final ColouredWriter consoleHandler = new ColouredWriter(hydra.getConsoleReader());
+            consoleHandler.setLevel(Level.INFO);
+            consoleHandler.setFormatter(new ConciseFormatter(this, true));
+            this.addHandler(consoleHandler);
+
+        } catch (IOException e) {
+            System.err.println("Couldn't register logger !");
+            hydra.shutdown();
         }
+        this.dispatcher.start();
     }
 
-    public void log(LogType type, String message){
-        //final String date = String.format("[%s] ", new SimpleDateFormat("dd/MM/yyyy kk:mm:ss").format(new Date()));
-        final String msg = this.loggerName + "[" + type.getName().toUpperCase() + "] " + message;
+    @Override
+    public void log(LogRecord record) {
+        this.dispatcher.queue(record);
+    }
 
-        if (this.hydra.getConfiguration() != null && this.hydra.getConfiguration().isLogFile()) this.save(msg);
-        System.out.println(msg);
+    void doLog(LogRecord record) {
+        super.log(record);
     }
 
     public void printHeaderMessage() {
-       this.log(LogType.INFO,"########################################");
-       this.log(LogType.INFO,"#####          Welcome in          #####");
-       this.log(LogType.INFO,"#####    Hydra - Fistin Network    #####");
-       this.log(LogType.INFO,"##### Authors: Faustin - AstFaster #####");
-       this.log(LogType.INFO,"########################################");
+        this.log(Level.INFO,"########################################");
+        this.log(Level.INFO,"#####          Welcome in          #####");
+        this.log(Level.INFO,"#####    Hydra - Fistin Network    #####");
+        this.log(Level.INFO,"##### Authors: Faustin - AstFaster #####");
+        this.log(Level.INFO,"########################################");
     }
 
     public void printFooterMessage() {
-        this.log(LogType.INFO,"########################################");
-        this.log(LogType.INFO,"#####           Stopping           #####");
-        this.log(LogType.INFO,"#####    Hydra - Fistin Network    #####");
-        this.log(LogType.INFO,"##### Authors: Faustin - AstFaster #####");
-        this.log(LogType.INFO,"########################################");
+        this.log(Level.INFO,"########################################");
+        this.log(Level.INFO,"#####           Stopping           #####");
+        this.log(Level.INFO,"#####    Hydra - Fistin Network    #####");
+        this.log(Level.INFO,"##### Authors: Faustin - AstFaster #####");
+        this.log(Level.INFO,"########################################");
     }
-
-    private void save(String message){
-        if (this.file != null){
-            try {
-                if (!this.file.exists()) {
-                    if (this.file.getParentFile() != null) this.file.getParentFile().mkdirs();
-                    this.file.createNewFile();
-                }
-
-                if (this.writer != null) {
-                    this.writer.println(message);
-                    this.writer.flush();
-                }
-
-            } catch (IOException e){
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public String getLoggerName() {
-        return loggerName;
-    }
-
-    public void setLoggerName(String loggerName) {
-        this.loggerName = loggerName;
-    }
-
 }

@@ -1,7 +1,6 @@
 package fr.fistin.hydra.configuration;
 
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.util.logger.LogType;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -9,6 +8,7 @@ import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
+import java.util.logging.Level;
 
 public class HydraConfigurationManager {
 
@@ -29,11 +29,11 @@ public class HydraConfigurationManager {
             final InputStream inputStream = new FileInputStream(this.configFile);
             final Yaml yaml = new Yaml(new Constructor(HydraConfiguration.class));
 
-            this.hydra.getLogger().log(LogType.INFO, String.format("Loading configuration from %s file...", this.configFile.getName()));
+            this.hydra.getLogger().log(Level.INFO, String.format("Loading configuration from %s file...", this.configFile.getName()));
 
             this.configuration = yaml.load(inputStream);
         } catch (IOException e) {
-            this.hydra.getLogger().log(LogType.ERROR, String.format("An error occurred during loading configuration from %s file. Please restart Hydra.", this.configFile.getName()));
+            this.hydra.getLogger().log(Level.SEVERE, String.format("An error occurred during loading configuration from %s file. Please restart Hydra.", this.configFile.getName()));
             this.configFile.delete();
             this.hydra.shutdown();
         }
@@ -43,8 +43,8 @@ public class HydraConfigurationManager {
          if (this.configFile.createNewFile()) {
              this.configuration = new HydraConfiguration();
 
-             this.hydra.getLogger().log(LogType.INFO, String.format("%s file didn't exist !", this.configFile.getName()));
-             this.hydra.getLogger().log(LogType.INFO, String.format("Creating %s file...!", this.configFile.getName()));
+             this.hydra.getLogger().log(Level.INFO, String.format("%s file didn't exist !", this.configFile.getName()));
+             this.hydra.getLogger().log(Level.INFO, String.format("Creating %s file...!", this.configFile.getName()));
 
              final DumperOptions options = new DumperOptions();
              options.setIndent(2);

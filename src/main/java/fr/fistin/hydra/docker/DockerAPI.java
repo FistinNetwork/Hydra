@@ -1,10 +1,10 @@
 package fr.fistin.hydra.docker;
 
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.util.logger.LogType;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 public class DockerAPI {
 
@@ -21,18 +21,18 @@ public class DockerAPI {
         this.hydra.getScheduler().runTaskAsynchronously(() -> {
             final DockerCommand command = this.getDockerCommandByName(name);
 
-            this.hydra.getLogger().log(LogType.INFO, String.format("Calling command %s.", command.getName()));
+            this.hydra.getLogger().log(Level.INFO, String.format("Calling command %s.", command.getName()));
             command.getTask().run();
         });
     }
 
     public void unload() {
-        this.hydra.getLogger().log(LogType.INFO, "Unloading docker commands...");
+        this.hydra.getLogger().log(Level.INFO, "Unloading docker commands...");
         this.dockerCommands.clear();
     }
 
     public DockerCommand getDockerCommandByName(String name) {
-        return this.dockerCommands.getOrDefault(name, new DockerCommand("unknown", () -> this.hydra.getLogger().log(LogType.WARN, "Unknown command !")));
+        return this.dockerCommands.getOrDefault(name, new DockerCommand("unknown", () -> this.hydra.getLogger().log(Level.WARNING, "Unknown command !")));
     }
 
     public Map<String, DockerCommand> getDockerCommands() {

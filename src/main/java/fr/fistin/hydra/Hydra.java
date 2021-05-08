@@ -1,31 +1,33 @@
 package fr.fistin.hydra;
 
+import fr.fistin.hydra.command.HydraCommandManager;
+import fr.fistin.hydra.command.model.HelpCommand;
+import fr.fistin.hydra.command.model.ServerCommand;
+import fr.fistin.hydra.command.model.StopCommand;
 import fr.fistin.hydra.configuration.HydraConfiguration;
 import fr.fistin.hydra.configuration.HydraConfigurationManager;
 import fr.fistin.hydra.docker.DockerAPI;
 import fr.fistin.hydra.docker.DockerConnector;
-import fr.fistin.hydra.query.HydraQueryReceiver;
-import fr.fistin.hydraconnector.HydraConnector;
-import fr.fistin.hydraconnector.protocol.HydraProtocol;
-import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
-import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
-import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
-import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
-import fr.fistin.hydraconnector.protocol.packet.server.StartServerPacket;
 import fr.fistin.hydra.proxy.HydraProxyManager;
-import fr.fistin.hydraconnector.redis.RedisHandler;
-import fr.fistin.hydraconnector.redis.RedisConnection;
+import fr.fistin.hydra.query.HydraQueryReceiver;
 import fr.fistin.hydra.scheduler.HydraScheduler;
 import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.server.template.HydraTemplateManager;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.HydraLogger;
-import fr.fistin.hydra.util.logger.LogType;
+import fr.fistin.hydra.util.logger.LoggingOutputStream;
+import fr.fistin.hydraconnector.HydraConnector;
+import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
+import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
+import jline.console.ConsoleReader;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class Hydra {
 
@@ -33,9 +35,10 @@ public class Hydra {
     private boolean running = false;
     private boolean stopping = false;
 
+    private ConsoleReader consoleReader;
     private HydraConnector hydraConnector;
+    private HydraLogger logger;
 
-    private final HydraLogger logger;
     private final HydraConfigurationManager configurationManager;
     private final HydraScheduler scheduler;
     private final HydraProxyManager proxyManager;
@@ -43,9 +46,9 @@ public class Hydra {
     private final DockerAPI dockerAPI;
     private final DockerConnector docker;
     private final HydraTemplateManager templateManager;
+    private final HydraCommandManager commandManager;
 
     public Hydra() {
-        this.logger = new HydraLogger(this, String.format("[%s]", References.HYDRA), new File("latest.log"));
         this.configurationManager = new HydraConfigurationManager(this, new File("hydra-config.yml"));
         this.scheduler = new HydraScheduler(this);
         this.proxyManager = new HydraProxyManager(this);
@@ -53,28 +56,38 @@ public class Hydra {
         this.dockerAPI = new DockerAPI(this);
         this.docker = new DockerConnector();
         this.templateManager = new HydraTemplateManager(this);
+        this.commandManager = new HydraCommandManager(this);
     }
 
     public void start() {
+        this.setupConsoleReader();
+        this.setupLogger();
+
         this.configurationManager.loadConfiguration();
 
         this.hydraConnector = new HydraConnector(References.GSON, this.getConfiguration().getRedisIp(), this.getConfiguration().getRedisPort(), this.getConfiguration().getRedisPassword());
 
-        this.logger.createLogFile();
         this.templateManager.createTemplatesFolder();
-        this.templateManager.loadAllTemplatesFromTemplatesFolder();
-        this.proxyManager.downloadMinecraftProxyImage();
-        this.serverManager.downloadMinecraftServerImage();
-        if (!this.hydraConnector.connectToRedis()) this.stopping = true;
+
+        if (!this.hydraConnector.connectToRedis()) this.shutdown();
 
         // If redis connection failed
         if (!this.stopping) {
-            this.hydraConnector.startPacketHandler();
-            this.registerReceivers();
-
             this.logger.printHeaderMessage();
 
+            this.proxyManager.downloadMinecraftProxyImage();
+            this.serverManager.downloadMinecraftServerImage();
+
+            this.templateManager.loadAllTemplatesFromTemplatesFolder();
+
+            this.hydraConnector.startPacketHandler();
+
+            this.registerCommands();
+            this.registerReceivers();
+
             this.running = true;
+
+            this.scheduler.runTaskAsynchronously(this.commandManager::start);
         }
     }
 
@@ -96,18 +109,46 @@ public class Hydra {
             this.hydraConnector.getRedisHandler().stop();
             this.hydraConnector.getRedisConnection().disconnect();
 
-            this.logger.log(LogType.INFO, "Shutting down executor service...");
+            this.logger.log(Level.INFO, "Shutting down executor service...");
             this.executorService.shutdown();
 
             this.dockerAPI.unload();
 
-            this.logger.log(LogType.INFO, "Hydra is now down. See you soon !");
-            System.exit(0);
+            this.logger.log(Level.INFO, "Hydra is now down. See you soon !");
 
+            this.running = false;
+
+            System.exit(0);
         });
     }
 
+    private void setupConsoleReader() {
+        try {
+            this.consoleReader = new ConsoleReader();
+            this.consoleReader.setExpandEvents(false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setupLogger() {
+        new File("logs/").mkdirs();
+
+        this.logger = new HydraLogger(this, References.HYDRA, "logs/hydra.log");
+
+        System.setErr(new PrintStream(new LoggingOutputStream(this.logger, Level.SEVERE), true));
+        System.setOut(new PrintStream(new LoggingOutputStream(this.logger, Level.INFO), true));
+    }
+
+    private void registerCommands() {
+        System.out.println("Registering all hydra commands...");
+        this.commandManager.addCommand(new HelpCommand(this, "help"));
+        this.commandManager.addCommand(new StopCommand(this, "stop"));
+        this.commandManager.addCommand(new ServerCommand(this, "server"));
+    }
+
     private void registerReceivers() {
+        System.out.println("Registering all hydra receivers...");
         this.hydraConnector.getRedisHandler().registerPacketReceiver(HydraChannel.QUERY, new HydraQueryReceiver(this));
     }
 
@@ -117,6 +158,14 @@ public class Hydra {
 
     public void sendPacket(String channel, HydraPacket packet) {
         this.hydraConnector.getConnectionManager().sendPacket(channel, packet);
+    }
+
+    public ConsoleReader getConsoleReader() {
+        return this.consoleReader;
+    }
+
+    public HydraConnector getHydraConnector() {
+        return this.hydraConnector;
     }
 
     public HydraLogger getLogger() {
@@ -153,6 +202,10 @@ public class Hydra {
 
     public HydraTemplateManager getTemplateManager() {
         return this.templateManager;
+    }
+
+    public HydraCommandManager getCommandManager() {
+        return this.commandManager;
     }
 
     public ExecutorService getExecutorService() {

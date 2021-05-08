@@ -1,12 +1,12 @@
 package fr.fistin.hydra.scheduler;
 
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.util.logger.LogType;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 public class HydraScheduler {
 
@@ -18,8 +18,6 @@ public class HydraScheduler {
 
     public HydraScheduler(Hydra hydra) {
         this.hydra = hydra;
-
-        this.hydra.getLogger().log(LogType.INFO, "Starting hydra scheduler...");
     }
 
     public HydraTask schedule(Runnable task, long delay, TimeUnit unit) {

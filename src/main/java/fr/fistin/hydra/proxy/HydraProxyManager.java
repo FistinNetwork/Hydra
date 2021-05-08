@@ -5,12 +5,12 @@ import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.util.References;
-import fr.fistin.hydra.util.logger.LogType;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 public class HydraProxyManager {
 
@@ -24,16 +24,14 @@ public class HydraProxyManager {
     public HydraProxyManager(Hydra hydra) {
         this.hydra = hydra;
         this.proxies = new HashMap<>();
-
-        this.hydra.getLogger().log(LogType.INFO, "Starting proxy manager...");
     }
 
     public void downloadMinecraftProxyImage() {
         try {
-            this.hydra.getLogger().log(LogType.INFO, String.format("Pulling %s:%s image... (this might take few minutes)", this.minecraftProxyImage, this.minecraftProxyImageTag));
+            this.hydra.getLogger().log(Level.INFO, String.format("Pulling %s:%s image... (this might take few minutes)", this.minecraftProxyImage, this.minecraftProxyImageTag));
             this.hydra.getDocker().getDockerClient().pullImageCmd(this.minecraftProxyImage).withTag(this.minecraftProxyImageTag).exec(new PullImageResultCallback()).awaitCompletion(60, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            this.hydra.getLogger().log(LogType.ERROR, String.format("%s encountered an exception during download image: %s:%s. Cause: %s", References.HYDRA, this.minecraftProxyImage, this.minecraftProxyImageTag, e.getMessage()));
+            this.hydra.getLogger().log(Level.SEVERE, String.format("%s encountered an exception during download image: %s:%s. Cause: %s", References.HYDRA, this.minecraftProxyImage, this.minecraftProxyImageTag, e.getMessage()));
             this.hydra.shutdown();
         }
     }
@@ -62,14 +60,14 @@ public class HydraProxyManager {
 
                 return true;
             } catch (Exception e) {
-                this.hydra.getLogger().log(LogType.WARN, String.format("Le proxy: %s ne s'est pas stoppé !", proxy.toString()));
+                this.hydra.getLogger().log(Level.WARNING, String.format("Le proxy: %s ne s'est pas stoppé !", proxy.toString()));
             }
         }
         return false;
     }
 
     public void stopAllProxies() {
-        this.hydra.getLogger().log(LogType.INFO, "Stopping all proxies currently running...");
+        this.hydra.getLogger().log(Level.INFO, "Stopping all proxies currently running...");
 
         for (Map.Entry<String, HydraProxy> entry : this.proxies.entrySet()) {
             this.hydra.getScheduler().runTaskAsynchronously(() -> this.stopProxy(entry.getValue()));
@@ -80,8 +78,8 @@ public class HydraProxyManager {
         final List<Container> containers = this.hydra.getDocker().getDockerClient().listContainersCmd().exec();
         for (Container container : containers) {
             if (proxy.getContainer().equals(container.getId())) {
-                this.hydra.getLogger().log(LogType.ERROR,  String.format("Le proxy: %s ne s'est pas stoppé !", proxy.toString()));
-                this.hydra.getLogger().log(LogType.INFO,  String.format("Tentative de kill sur le proxy: %s", proxy.toString()));
+                this.hydra.getLogger().log(Level.SEVERE,  String.format("Le proxy: %s ne s'est pas stoppé !", proxy.toString()));
+                this.hydra.getLogger().log(Level.INFO,  String.format("Tentative de kill sur le proxy: %s", proxy.toString()));
                 this.hydra.getDocker().getDockerClient().killContainerCmd(proxy.getContainer()).exec();
             }
         }
@@ -89,7 +87,7 @@ public class HydraProxyManager {
     }
 
     public void checkIfAllProxiesHaveShutdown() {
-        this.hydra.getLogger().log(LogType.INFO, "Checking if all proxies have shutdown...");
+        this.hydra.getLogger().log(Level.INFO, "Checking if all proxies have shutdown...");
 
         for (Map.Entry<String, HydraProxy> entry : this.proxies.entrySet()) {
             this.checkIfProxyHasShutdown(entry.getValue());

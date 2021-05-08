@@ -1,7 +1,6 @@
 package fr.fistin.hydra.server.template;
 
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.util.logger.LogType;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -12,6 +11,7 @@ import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.*;
+import java.util.logging.Level;
 
 public class HydraTemplateManager {
 
@@ -28,12 +28,13 @@ public class HydraTemplateManager {
 
     public void createTemplatesFolder() {
         if (!this.templatesFolder.exists()) {
-            this.hydra.getLogger().log(LogType.INFO, String.format("%s folder doesn't exist ! Creating it...", this.templatesFolder.getName()));
+            this.hydra.getLogger().log(Level.INFO, String.format("%s folder doesn't exist ! Creating it...", this.templatesFolder.getName()));
             this.templatesFolder.mkdirs();
         }
     }
 
     public void loadAllTemplatesFromTemplatesFolder() {
+        System.out.println("Loading templates from template folder...");
         final File[] files = this.templatesFolder.listFiles();
 
         if (files != null) {
@@ -53,11 +54,13 @@ public class HydraTemplateManager {
             final Yaml yaml = new Yaml(new Constructor(HydraTemplate.class));
 
             template = yaml.load(inputStream);
+
+            System.out.println("Loaded '" + template.getName() + "' template from: " + file.getName());
         } catch (FileNotFoundException e) {
-            this.hydra.getLogger().log(LogType.ERROR, String.format("Couldn't find %s file !", file.getName()));
+            this.hydra.getLogger().log(Level.SEVERE, String.format("Couldn't find %s file !", file.getName()));
         }
 
-        if (template == null) this.hydra.getLogger().log(LogType.ERROR, String.format("Couldn't load a template from %s file !", file.getName()));
+        if (template == null) this.hydra.getLogger().log(Level.SEVERE, String.format("Couldn't load a template from %s file !", file.getName()));
         return template;
     }
 
@@ -84,12 +87,12 @@ public class HydraTemplateManager {
 
                 yaml.dump(template, writer);
 
-                this.hydra.getLogger().log(LogType.INFO, String.format("Successfully created %s template !", template.getName()));
+                this.hydra.getLogger().log(Level.INFO, String.format("Successfully created %s template !", template.getName()));
             } else {
-                this.hydra.getLogger().log(LogType.ERROR, String.format("%s file already exists !", file.getName()));
+                this.hydra.getLogger().log(Level.SEVERE, String.format("%s file already exists !", file.getName()));
             }
         } catch (Exception e) {
-            this.hydra.getLogger().log(LogType.ERROR, String.format("Encountered exception during creating %s template in %s file", template.getName(), file.getName()));
+            this.hydra.getLogger().log(Level.SEVERE, String.format("Encountered exception during creating %s template in %s file", template.getName(), file.getName()));
             if (file.exists()) file.delete();
         }
     }

@@ -2,15 +2,14 @@ package fr.fistin.hydra.server;
 
 public enum ServerState {
 
-    CREATING(0,"Création", false),
-    STARTING(1, "Démarrage", false),
-    READY(2, "Prêt", true),
-    PLAYING(3, "En jeu", false),
-    SHUTDOWN(4, "Arrêt", false),
+    CREATING(0,"Creating", false),
+    STARTING(1, "Starting", false),
+    READY(2, "Ready", true),
+    PLAYING(3, "In Game", false),
+    SHUTDOWN(4, "Shutdown", false),
     IDLE(5, "Freeze", false);
 
     private final int id;
-    // TODO Translate
     private final String displayText;
     private final boolean access;
 
