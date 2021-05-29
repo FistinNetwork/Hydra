@@ -10,9 +10,9 @@ public class HydraServer {
     protected UUID uuid;
     protected String type;
 
-    protected String serverIp = null;
+    protected String serverIp;
 
-    protected final int serverPort = 25565;
+    protected int serverPort;
 
     protected String mapUrl;
     protected String pluginUrl;
@@ -84,6 +84,10 @@ public class HydraServer {
 
     public int getServerPort() {
         return this.serverPort;
+    }
+
+    public void setServerPort(int serverPort) {
+        this.serverPort = serverPort;
     }
 
     public String getMapUrl() {

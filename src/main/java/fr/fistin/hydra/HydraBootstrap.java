@@ -1,8 +1,5 @@
 package fr.fistin.hydra;
 
-import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
-import fr.fistin.hydraconnector.protocol.packet.server.StartServerPacket;
-
 public class HydraBootstrap {
 
     public static void main(String[] args) {
@@ -14,8 +11,5 @@ public class HydraBootstrap {
 
         final Hydra hydra = new Hydra();
         hydra.start();
-
-        // Personal test of Hydra
-        hydra.sendPacket(HydraChannel.QUERY, new StartServerPacket("vanilla"));
     }
 }

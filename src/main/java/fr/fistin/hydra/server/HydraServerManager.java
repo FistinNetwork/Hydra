@@ -4,12 +4,16 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.server.template.HydraTemplate;
+import fr.fistin.hydra.util.References;
 import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
-import fr.fistin.hydra.server.template.HydraTemplate;
-import fr.fistin.hydra.util.References;
+import fr.fistin.hydraconnector.protocol.packet.proxy.HookServerToProxyPacket;
+import fr.fistin.hydraconnector.protocol.packet.proxy.RemoveServerFromProxyPacket;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,12 +48,16 @@ public class HydraServerManager {
     public void startServer(HydraServer server) {
         final List<String> env = server.getOptions().getEnv();
         if (server.getMapUrl() != null) env.add("WORLD=" + server.getMapUrl());
-        if (server.getPluginUrl() != null) env.add("MODPACK=" +  server.getPluginUrl());
+        if (server.getPluginUrl() != null) env.add("MODPACK=" +  server.getPluginUrl());;
+
+        final Ports portsBinding = new Ports();
+        portsBinding.bind(ExposedPort.tcp(25565), Ports.Binding.empty());
 
         server.setContainer(this.hydra.getDocker().getDockerClient()
                 .createContainerCmd(this.minecraftServerImage + ":" + this.minecraftServerImageTag)
                 .withEnv(env)
-                .withHostConfig(new HostConfig().withAutoRemove(true))
+            .withHostConfig(new HostConfig().withAutoRemove(true).withPortBindings(portsBinding))
+                .withHostName(server.toString())
                 .withName(server.toString())
                 .exec()
                 .getId());
@@ -57,15 +65,26 @@ public class HydraServerManager {
         this.hydra.getDocker().getDockerClient().startContainerCmd(server.getContainer()).exec();
 
         server.setStartedTime(System.currentTimeMillis());
-        server.setServerIp(this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getIpAddress());
+
+        try {
+            server.setServerIp(InetAddress.getLocalHost().getHostAddress());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
 
         server.setHealthyTask(this.hydra.getScheduler().schedule(() ->  {
             if (server.getCurrentState() != ServerState.SHUTDOWN) server.checkStatus();
         }, server.getCheckAlive(), server.getCheckAlive(), TimeUnit.MILLISECONDS));
 
+        final Ports.Binding[] bindings = this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25565));
+        final int port = Integer.parseInt(bindings[0].getHostPortSpec());
+
+        server.setServerPort(port);
+
         System.out.println("Started " + server + " server");
 
         this.hydra.sendPacket(HydraChannel.EVENT, new ServerStartedPacket(server.toString(), server.getType()));
+        this.hydra.sendPacket(HydraChannel.PROXIES, new HookServerToProxyPacket(server.toString(), server.getServerIp(), server.getServerPort()));
     }
 
     public void startServer(HydraTemplate template) {
@@ -90,6 +109,7 @@ public class HydraServerManager {
                 if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1,  TimeUnit.MINUTES);
 
                 this.hydra.sendPacket(HydraChannel.EVENT, new ServerStoppedPacket(server.toString(), server.getType()));
+                this.hydra.sendPacket(HydraChannel.PROXIES, new RemoveServerFromProxyPacket(server.toString()));
 
                 System.out.println("Stopped " + server + " server. (Checking if really in 1 minutes if Hydra is not stopping)");
 

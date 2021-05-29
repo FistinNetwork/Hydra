@@ -24,14 +24,22 @@ public class ServerCommand extends HydraCommand {
             if (args[0].equalsIgnoreCase("list")) {
                 this.list();
             } else if (args[0].equalsIgnoreCase("start")) {
-                if (args[1] != null) this.start(args[1]);
+                if (args.length > 1) {
+                    if (args[1] != null) this.start(args[1]);
+                }
                 else System.err.println("Usage: server <start> <type>");
             } else if (args[0].equalsIgnoreCase("stop")) {
-                if (args[1] != null) this.stop(args[1]);
+                if (args.length > 1) {
+                    if (args[1] != null) this.stop(args[1]);
+                }
                 else System.err.println("Usage: server <stop> <id>");
             } else if (args[0].equalsIgnoreCase("check")) {
-                if (args[1] != null) this.check(args[1]);
+                if (args.length > 1) {
+                    if (args[1] != null) this.check(args[1]);
+                }
                 else System.err.println("Usage: server <check> <id>");
+            } else {
+                System.err.println("Usage: server <list|start|stop|check>");
             }
         } else {
             System.err.println("Usage: server <list|start|stop|check>");
@@ -45,9 +53,9 @@ public class ServerCommand extends HydraCommand {
         final int size = this.hydra.getServerManager().getServers().size();
 
         if (size == 1) {
-            this.hydra.getLogger().log(Level.INFO, ChatColor.GREEN + String.valueOf(size) + ChatColor.WHITE + " servers is actually running");
+            this.hydra.getLogger().log(Level.INFO, ChatColor.GREEN + String.valueOf(size) + ChatColor.WHITE + " servers is currently running");
         } else {
-            this.hydra.getLogger().log(Level.INFO, ChatColor.GREEN + String.valueOf(size) + ChatColor.WHITE + " servers are actually running");
+            this.hydra.getLogger().log(Level.INFO, ChatColor.GREEN + String.valueOf(size) + ChatColor.WHITE + " servers are currently running");
         }
 
         for (Map.Entry<String, HydraServer> entry : this.hydra.getServerManager().getServers().entrySet()) {
@@ -67,7 +75,7 @@ public class ServerCommand extends HydraCommand {
             this.hydra.getLogger().log(Level.INFO, ChatColor.YELLOW + "-------------" + ChatColor.DARK_GREEN + " Hydra Templates List" + ChatColor.YELLOW + " -------------");
 
             for (Map.Entry<String, HydraTemplate> entry: this.hydra.getTemplateManager().getTemplates().entrySet()) {
-                this.hydra.getLogger().log(Level.INFO, ChatColor.WHITE + "- " + ChatColor.GREEN + entry.getValue());
+                this.hydra.getLogger().log(Level.INFO, ChatColor.WHITE + "- " + ChatColor.GREEN + entry.getValue().getName());
             }
 
             this.hydra.getLogger().log(Level.INFO, ChatColor.YELLOW + "------------------------------------------------");

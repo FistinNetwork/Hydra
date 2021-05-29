@@ -43,7 +43,7 @@ public class HydraProxy {
     }
 
     public UUID getUuid() {
-        return uuid;
+        return this.uuid;
     }
 
     public void setUuid(UUID uuid) {
@@ -51,7 +51,7 @@ public class HydraProxy {
     }
 
     public String getProxyIp() {
-        return proxyIp;
+        return this.proxyIp;
     }
 
     public void setProxyIp(String proxyIp) {
@@ -59,11 +59,11 @@ public class HydraProxy {
     }
 
     public int getServerPort() {
-        return serverPort;
+        return this.serverPort;
     }
 
     public long getStartedTime() {
-        return startedTime;
+        return this.startedTime;
     }
 
     public void setStartedTime(long startedTime) {
@@ -71,7 +71,7 @@ public class HydraProxy {
     }
 
     public ProxyOptions getOptions() {
-        return options;
+        return this.options;
     }
 
     public void setOptions(ProxyOptions options) {
@@ -79,7 +79,7 @@ public class HydraProxy {
     }
 
     public ProxyState getCurrentState() {
-        return currentState;
+        return this.currentState;
     }
 
     public void setCurrentState(ProxyState currentState) {
@@ -87,7 +87,7 @@ public class HydraProxy {
     }
 
     public String getContainer() {
-        return container;
+        return this.container;
     }
 
     public void setContainer(String container) {

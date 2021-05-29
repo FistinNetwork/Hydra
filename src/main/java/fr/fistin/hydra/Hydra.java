@@ -69,7 +69,7 @@ public class Hydra {
 
         this.templateManager.createTemplatesFolder();
 
-        if (!this.hydraConnector.connectToRedis()) this.shutdown();
+        if (!this.hydraConnector.connectToRedis()) System.exit(0);
 
         // If redis connection failed
         if (!this.stopping) {
