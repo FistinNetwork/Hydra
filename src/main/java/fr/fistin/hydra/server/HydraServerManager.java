@@ -1,11 +1,13 @@
 package fr.fistin.hydra.server;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.docker.container.DockerContainer;
+import fr.fistin.hydra.docker.image.DockerImage;
 import fr.fistin.hydra.server.template.HydraTemplate;
-import fr.fistin.hydra.util.References;
 import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
@@ -22,8 +24,7 @@ import java.util.logging.Level;
 
 public class HydraServerManager {
 
-    private final String minecraftServerImage = "itzg/minecraft-server";
-    private final String minecraftServerImageTag = "java8";
+    private final DockerImage minecraftServerImage = new DockerImage("itzg/minecraft-server", "java8");
 
     private final Map<String, HydraServer> servers;
 
@@ -34,36 +35,21 @@ public class HydraServerManager {
         this.servers = new HashMap<>();
     }
 
-    public void downloadMinecraftServerImage() {
-        try {
-            this.hydra.getLogger().log(Level.INFO, String.format("Pulling %s:%s image... (this might take few minutes)", this.minecraftServerImage, this.minecraftServerImageTag));
-            this.hydra.getDocker().getDockerClient().pullImageCmd(this.minecraftServerImage).withTag(this.minecraftServerImageTag).exec(new PullImageResultCallback()).awaitCompletion(60, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            this.hydra.getLogger().log(Level.SEVERE, String.format("%s encountered an exception during download image: %s. Cause: %s", References.HYDRA, this.minecraftServerImage + ":" + this.minecraftServerImageTag, e.getMessage()));
-            this.hydra.shutdown();
-        }
+    public void pullMinecraftServerImage() {
+        this.hydra.getImageManager().pullImage(this.minecraftServerImage);
     }
 
-    @SuppressWarnings("deprecation")
     public void startServer(HydraServer server) {
         final List<String> env = server.getOptions().getEnv();
         if (server.getMapUrl() != null) env.add("WORLD=" + server.getMapUrl());
-        if (server.getPluginUrl() != null) env.add("MODPACK=" +  server.getPluginUrl());;
+        if (server.getPluginUrl() != null) env.add("MODPACK=" +  server.getPluginUrl());
 
-        final Ports portsBinding = new Ports();
-        portsBinding.bind(ExposedPort.tcp(25565), Ports.Binding.empty());
+        final DockerContainer container = new DockerContainer(server.toString(), this.minecraftServerImage);
+        container.setHostname(server.toString());
+        container.setEnvs(env);
+        container.setPublishedPort(25565);
 
-        server.setContainer(this.hydra.getDocker().getDockerClient()
-                .createContainerCmd(this.minecraftServerImage + ":" + this.minecraftServerImageTag)
-                .withEnv(env)
-            .withHostConfig(new HostConfig().withAutoRemove(true).withPortBindings(portsBinding))
-                .withHostName(server.toString())
-                .withName(server.toString())
-                .exec()
-                .getId());
-
-        this.hydra.getDocker().getDockerClient().startContainerCmd(server.getContainer()).exec();
-
+        server.setContainer(this.hydra.getContainerManager().runContainer(container));
         server.setStartedTime(System.currentTimeMillis());
 
         try {
@@ -76,7 +62,7 @@ public class HydraServerManager {
             if (server.getCurrentState() != ServerState.SHUTDOWN) server.checkStatus();
         }, server.getCheckAlive(), server.getCheckAlive(), TimeUnit.MILLISECONDS));
 
-        final Ports.Binding[] bindings = this.hydra.getDocker().getDockerClient().inspectContainerCmd(server.getContainer()).exec().getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25565));
+        final Ports.Binding[] bindings = this.hydra.getContainerManager().inspectContainer(container).getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25565));
         final int port = Integer.parseInt(bindings[0].getHostPortSpec());
 
         server.setServerPort(port);
@@ -102,8 +88,10 @@ public class HydraServerManager {
     public boolean stopServer(HydraServer server) {
         if (!server.getContainer().isEmpty()) {
             try {
-                this.hydra.getDocker().getDockerClient().stopContainerCmd(server.getContainer()).exec();
+                this.hydra.getContainerManager().stopContainer(server.getContainer());
+
                 server.setCurrentState(ServerState.SHUTDOWN);
+
                 this.hydra.getScheduler().cancel(server.getHealthyTask().getId());
 
                 if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1,  TimeUnit.MINUTES);

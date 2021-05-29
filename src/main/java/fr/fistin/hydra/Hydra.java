@@ -6,8 +6,9 @@ import fr.fistin.hydra.command.model.ServerCommand;
 import fr.fistin.hydra.command.model.StopCommand;
 import fr.fistin.hydra.configuration.HydraConfiguration;
 import fr.fistin.hydra.configuration.HydraConfigurationManager;
-import fr.fistin.hydra.docker.DockerAPI;
 import fr.fistin.hydra.docker.DockerConnector;
+import fr.fistin.hydra.docker.container.DockerContainerManager;
+import fr.fistin.hydra.docker.image.DockerImageManager;
 import fr.fistin.hydra.proxy.HydraProxyManager;
 import fr.fistin.hydra.query.HydraQueryReceiver;
 import fr.fistin.hydra.scheduler.HydraScheduler;
@@ -39,24 +40,33 @@ public class Hydra {
     private HydraConnector hydraConnector;
     private HydraLogger logger;
 
+    /**
+     * Hydra
+     */
     private final HydraConfigurationManager configurationManager;
     private final HydraScheduler scheduler;
     private final HydraProxyManager proxyManager;
     private final HydraServerManager serverManager;
-    private final DockerAPI dockerAPI;
-    private final DockerConnector docker;
     private final HydraTemplateManager templateManager;
     private final HydraCommandManager commandManager;
+
+    /**
+     * Docker
+     */
+    private final DockerConnector docker;
+    private final DockerContainerManager containerManager;
+    private final DockerImageManager imageManager;
 
     public Hydra() {
         this.configurationManager = new HydraConfigurationManager(this, new File("hydra-config.yml"));
         this.scheduler = new HydraScheduler(this);
         this.proxyManager = new HydraProxyManager(this);
         this.serverManager = new HydraServerManager(this);
-        this.dockerAPI = new DockerAPI(this);
-        this.docker = new DockerConnector();
         this.templateManager = new HydraTemplateManager(this);
         this.commandManager = new HydraCommandManager(this);
+        this.docker = new DockerConnector();
+        this.containerManager = new DockerContainerManager(this);
+        this.imageManager = new DockerImageManager(this);
     }
 
     public void start() {
@@ -75,8 +85,8 @@ public class Hydra {
         if (!this.stopping) {
             this.logger.printHeaderMessage();
 
-            this.proxyManager.downloadMinecraftProxyImage();
-            this.serverManager.downloadMinecraftServerImage();
+            this.proxyManager.pullMinecraftProxyImage();
+            this.serverManager.pullMinecraftServerImage();
 
             this.templateManager.loadAllTemplatesFromTemplatesFolder();
 
@@ -111,8 +121,6 @@ public class Hydra {
 
             this.logger.log(Level.INFO, "Shutting down executor service...");
             this.executorService.shutdown();
-
-            this.dockerAPI.unload();
 
             this.logger.log(Level.INFO, "Hydra is now down. See you soon !");
 
@@ -192,20 +200,24 @@ public class Hydra {
         return this.serverManager;
     }
 
-    public DockerAPI getDockerAPI() {
-        return this.dockerAPI;
-    }
-
-    public DockerConnector getDocker() {
-        return this.docker;
-    }
-
     public HydraTemplateManager getTemplateManager() {
         return this.templateManager;
     }
 
     public HydraCommandManager getCommandManager() {
         return this.commandManager;
+    }
+
+    public DockerConnector getDocker() {
+        return this.docker;
+    }
+
+    public DockerContainerManager getContainerManager() {
+        return this.containerManager;
+    }
+
+    public DockerImageManager getImageManager() {
+        return this.imageManager;
     }
 
     public ExecutorService getExecutorService() {

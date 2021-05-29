@@ -8,7 +8,6 @@ public class HydraBootstrap {
             return;
         }
 
-
         final Hydra hydra = new Hydra();
         hydra.start();
     }

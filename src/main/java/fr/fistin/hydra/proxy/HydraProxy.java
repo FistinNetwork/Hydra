@@ -10,7 +10,7 @@ public class HydraProxy {
 
     private String proxyIp;
 
-    private final int serverPort = 25565;
+    private int proxyPort;
 
     private long startedTime;
 
@@ -58,8 +58,12 @@ public class HydraProxy {
         this.proxyIp = proxyIp;
     }
 
-    public int getServerPort() {
-        return this.serverPort;
+    public int getProxyPort() {
+        return this.proxyPort;
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort = proxyPort;
     }
 
     public long getStartedTime() {
