@@ -5,26 +5,25 @@ import java.util.List;
 
 public class ProxyOptions {
 
-    private String[] plugins = {};
+    private String pluginUrl;
 
-    public String[] getPlugins() {
-        return this.plugins;
+    public ProxyOptions(String pluginUrl) {
+        this.pluginUrl = pluginUrl;
     }
 
-    public void setPlugins(String[] plugins) {
-        this.plugins = plugins;
+    public String getPluginUrl() {
+        return this.pluginUrl;
+    }
+
+    public void setPluginUrl(String pluginUrl) {
+        this.pluginUrl = pluginUrl;
     }
 
     public List<String> getEnvs() {
         final List<String> env = new ArrayList<>();
-        final StringBuilder plugins = new StringBuilder();
 
-        for (String plugin : this.plugins) {
-            plugins.append(plugin).append(",");
-        }
-
-        env.add(plugins.toString());
         env.add("TYPE=WATERFALL");
+        env.add("PLUGINS=" + this.pluginUrl);
 
         return env;
     }

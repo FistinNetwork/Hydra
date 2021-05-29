@@ -10,7 +10,9 @@ import fr.fistin.hydra.docker.DockerConnector;
 import fr.fistin.hydra.docker.container.DockerContainerManager;
 import fr.fistin.hydra.docker.image.DockerImageManager;
 import fr.fistin.hydra.proxy.HydraProxyManager;
-import fr.fistin.hydra.query.HydraQueryReceiver;
+import fr.fistin.hydra.receiver.HydraProxyReceiver;
+import fr.fistin.hydra.receiver.HydraQueryReceiver;
+import fr.fistin.hydra.receiver.HydraServerReceiver;
 import fr.fistin.hydra.scheduler.HydraScheduler;
 import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.server.template.HydraTemplateManager;
@@ -150,6 +152,7 @@ public class Hydra {
 
     private void registerCommands() {
         System.out.println("Registering all hydra commands...");
+
         this.commandManager.addCommand(new HelpCommand(this, "help"));
         this.commandManager.addCommand(new StopCommand(this, "stop"));
         this.commandManager.addCommand(new ServerCommand(this, "server"));
@@ -157,7 +160,10 @@ public class Hydra {
 
     private void registerReceivers() {
         System.out.println("Registering all hydra receivers...");
+
         this.hydraConnector.getRedisHandler().registerPacketReceiver(HydraChannel.QUERY, new HydraQueryReceiver(this));
+        this.hydraConnector.getRedisHandler().registerPacketReceiver(HydraChannel.SERVERS, new HydraServerReceiver(this));
+        this.hydraConnector.getRedisHandler().registerPacketReceiver(HydraChannel.PROXIES, new HydraProxyReceiver(this));
     }
 
     public void sendPacket(HydraChannel channel, HydraPacket packet) {

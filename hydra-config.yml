@@ -1,3 +1,0 @@
-redisIp: 127.0.0.1
-redisPassword: test-redis
-redisPort: 6379

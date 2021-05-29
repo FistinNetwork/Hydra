@@ -101,8 +101,8 @@ public class DockerContainer {
                 .withHostName(this.hostname)
                 .withEnv(this.envs)
                 .withHostConfig(new HostConfig()
-                        .withAutoRemove(true)
                         .withPortBindings(portsBindings)
+                        .withAutoRemove(true)
                 ).exec().getId();
 
         return this.id = container;

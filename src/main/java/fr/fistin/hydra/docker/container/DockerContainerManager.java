@@ -37,7 +37,7 @@ public class DockerContainerManager {
     }
 
     public void stopContainer(String containerId) {
-        this.dockerClient.stopContainerCmd(containerId);
+        this.dockerClient.stopContainerCmd(containerId).exec();
 
         this.containers.remove(containerId);
     }

@@ -6,6 +6,7 @@ import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.docker.container.DockerContainer;
 import fr.fistin.hydra.docker.image.DockerImage;
+import fr.fistin.hydra.server.HydraServer;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
 import fr.fistin.hydraconnector.protocol.packet.event.ProxyStartedPacket;
@@ -40,7 +41,7 @@ public class HydraProxyManager {
         final DockerContainer container = new DockerContainer(proxy.toString(), this.minecraftProxyImage);
         container.setHostname(proxy.toString());
         container.setEnvs(proxy.getOptions().getEnvs());
-        container.setPublishedPort(25565);
+        container.setPublishedPort(25577);
 
         proxy.setContainer(this.hydra.getContainerManager().runContainer(container));
         proxy.setStartedTime(System.currentTimeMillis());
@@ -53,10 +54,12 @@ public class HydraProxyManager {
             e.printStackTrace();
         }
 
-        final Ports.Binding[] bindings = this.hydra.getContainerManager().inspectContainer(container).getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25565));
+        final Ports.Binding[] bindings = this.hydra.getContainerManager().inspectContainer(container).getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25577));
         final int port = Integer.parseInt(bindings[0].getHostPortSpec());
 
         proxy.setProxyPort(port);
+
+        System.out.println("Started " + proxy + " proxy");
 
         this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.EVENT, new ProxyStartedPacket(proxy.toString()));
     }
@@ -70,13 +73,13 @@ public class HydraProxyManager {
 
                 this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.EVENT, new ProxyStoppedPacket(proxy.toString()));
 
-                this.proxies.remove(proxy.toString());
-
                 if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfProxyHasShutdown(proxy), 1, 0, TimeUnit.MINUTES);
+
+                System.out.println("Stopped " + proxy + " proxy. (Checking if really in 1 minutes if Hydra is not stopping)");
 
                 return true;
             } catch (Exception e) {
-                this.hydra.getLogger().log(Level.WARNING, String.format("Le proxy: %s ne s'est pas stoppé !", proxy));
+                this.hydra.getLogger().log(Level.SEVERE, String.format("The proxy: %s didn't stopped !", proxy));
             }
         }
         return false;
@@ -137,6 +140,10 @@ public class HydraProxyManager {
 
     public void removeProxy(HydraProxy proxy) {
         this.proxies.remove(proxy.toString());
+    }
+
+    public HydraProxy getProxyByName(String name) {
+        return this.proxies.getOrDefault(name, null);
     }
 
     public Map<String, HydraProxy> getProxies() {
