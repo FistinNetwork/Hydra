@@ -8,12 +8,15 @@ import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.docker.container.DockerContainer;
 import fr.fistin.hydra.docker.image.DockerImage;
 import fr.fistin.hydra.server.template.HydraTemplate;
+import fr.fistin.hydra.util.References;
+import fr.fistin.hydraconnector.api.ServerState;
 import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
 import fr.fistin.hydraconnector.protocol.packet.proxy.HookServerToProxyPacket;
 import fr.fistin.hydraconnector.protocol.packet.proxy.RemoveServerFromProxyPacket;
 import fr.fistin.hydraconnector.protocol.packet.server.EvacuateServerPacket;
+import redis.clients.jedis.Jedis;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -72,6 +75,8 @@ public class HydraServerManager {
 
         this.hydra.sendPacket(HydraChannel.EVENT, new ServerStartedPacket(server.toString(), server.getType()));
         this.hydra.sendPacket(HydraChannel.PROXIES, new HookServerToProxyPacket(server.toString(), server.getServerIp(), server.getServerPort()));
+
+        this.sendServerInfoToRedis(server);
     }
 
     public void startServer(HydraTemplate template) {
@@ -118,6 +123,21 @@ public class HydraServerManager {
         System.out.println("Evacuating '" + serverId + "' server to '" + destinationServerId + "' server...");
 
         this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.PROXIES, new EvacuateServerPacket(serverId, destinationServerId));
+    }
+
+    public void sendServerInfoToRedis(HydraServer server) {
+        final Jedis jedis = this.hydra.getHydraConnector().getRedisConnection().getJedis();
+        final String hash = References.HYDRA_REDIS_HASH + server.toString() + ":";
+        final Map<String, String> infos = new HashMap<>();
+
+        infos.put("slots", String.valueOf(server.getSlots()));
+        infos.put("currentPlayers", String.valueOf(server.getCurrentPlayers()));
+        infos.put("state", String.valueOf(server.getCurrentState().getId()));
+        infos.put("startedTime", String.valueOf(server.getStartedTime()));
+        infos.put("ip", server.getServerIp());
+        infos.put("port", String.valueOf(server.getServerPort()));
+
+        jedis.hmset(hash, infos);
     }
 
     public void stopAllServers() {
