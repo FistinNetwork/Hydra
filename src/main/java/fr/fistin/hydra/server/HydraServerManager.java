@@ -13,6 +13,7 @@ import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
 import fr.fistin.hydraconnector.protocol.packet.proxy.HookServerToProxyPacket;
 import fr.fistin.hydraconnector.protocol.packet.proxy.RemoveServerFromProxyPacket;
+import fr.fistin.hydraconnector.protocol.packet.server.EvacuateServerPacket;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -109,6 +110,16 @@ public class HydraServerManager {
         return false;
     }
 
+    public void evacuateServer(HydraServer server, HydraServer destinationServer) {
+        this.evacuateServer(server.toString(), destinationServer.toString());
+    }
+
+    public void evacuateServer(String serverId, String destinationServerId) {
+        System.out.println("Evacuating '" + serverId + "' server to '" + destinationServerId + "' server...");
+
+        this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.PROXIES, new EvacuateServerPacket(serverId, destinationServerId));
+    }
+
     public void stopAllServers() {
         this.hydra.getLogger().log(Level.INFO, "Stopping all servers currently running...");
 
@@ -140,21 +151,38 @@ public class HydraServerManager {
 
     public void checkStatus(HydraServer server) {
         if (!server.getContainer().isEmpty()) {
-            final InspectContainerResponse.ContainerState containerState = this.hydra.getDocker().getDockerClient()
-                    .inspectContainerCmd(server.getContainer())
-                    .exec()
-                    .getState();
+            final List<Container> containers = this.hydra.getContainerManager().listContainers();
 
-            switch (containerState.getHealth().getStatus()) {
-                case "starting":
-                    server.setCurrentState(ServerState.STARTING);
-                    break;
-                case "healthy":
-                    server.setCurrentState(ServerState.READY);
-                    break;
-                default:
-                    server.setCurrentState(ServerState.IDLE);
+            for (Container container : containers) {
+                if (container.getId().equals(server.getContainer())) {
+                    final InspectContainerResponse.ContainerState containerState = this.hydra.getDocker().getDockerClient()
+                            .inspectContainerCmd(server.getContainer())
+                            .exec()
+                            .getState();
+
+                    switch (containerState.getHealth().getStatus()) {
+                        case "starting":
+                            server.setCurrentState(ServerState.STARTING);
+                            break;
+                        case "healthy":
+                            server.setCurrentState(ServerState.READY);
+                            break;
+                        default:
+                            server.setCurrentState(ServerState.IDLE);
+                            break;
+                    }
+                    return;
+                }
             }
+
+            System.err.println("'" + server + "' is no longer running !");
+
+            this.hydra.getScheduler().cancel(server.getHealthyTask().getId());
+
+            this.hydra.sendPacket(HydraChannel.EVENT, new ServerStoppedPacket(server.toString(), server.getType()));
+            this.hydra.sendPacket(HydraChannel.PROXIES, new RemoveServerFromProxyPacket(server.toString()));
+
+            this.removeServer(server);
         }
     }
 

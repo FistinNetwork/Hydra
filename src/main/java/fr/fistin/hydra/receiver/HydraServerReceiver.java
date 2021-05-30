@@ -1,6 +1,7 @@
 package fr.fistin.hydra.receiver;
 
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.server.ServerState;
 import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
 import fr.fistin.hydraconnector.protocol.packet.common.HeartbeatPacket;
 import fr.fistin.hydraconnector.protocol.receiver.HydraPacketReceiver;
@@ -23,7 +24,7 @@ public class HydraServerReceiver implements HydraPacketReceiver {
 
         System.out.println("'" + serverId + "' server is now ready !");
 
-        this.hydra.getServerManager().getServerByName(serverId).checkStatus();
+        this.hydra.getServerManager().getServerByName(serverId).setCurrentState(ServerState.READY);
     }
 
 }

@@ -38,11 +38,17 @@ public class ServerCommand extends HydraCommand {
                     if (args[1] != null) this.check(args[1]);
                 }
                 else System.err.println("Usage: server <check> <id>");
-            } else {
-                System.err.println("Usage: server <list|start|stop|check>");
+            } else if (args[0].equalsIgnoreCase("evacuate")) {
+                if (args.length > 2) {
+                    if (args[1] != null && args[2] != null) this.evacuate(args[1], args[2]);
+                }
+                else System.err.println("Usage: server <evacuate> <serverId> <destinationServerId>");
+            }
+            else {
+                System.err.println("Usage: server <list|start|stop|check|evacuate>");
             }
         } else {
-            System.err.println("Usage: server <list|start|stop|check>");
+            System.err.println("Usage: server <list|start|stop|check|evacuate>");
         }
         return true;
     }
@@ -101,6 +107,23 @@ public class ServerCommand extends HydraCommand {
             this.hydra.getLogger().log(Level.INFO, "Server status is: " + server.getCurrentState().getDisplayText());
         } else {
             this.hydra.getLogger().log(Level.SEVERE, "Couldn't find a server with this id: " + arg);
+            this.list();
+        }
+    }
+
+    private void evacuate(String serverId, String destinationServerId) {
+        final HydraServer server = this.hydra.getServerManager().getServerByName(serverId);
+        final HydraServer destinationServer = this.hydra.getServerManager().getServerByName(destinationServerId);
+
+        if (server != null) {
+            if (destinationServer != null) {
+                this.hydra.getServerManager().evacuateServer(server, destinationServer);
+            } else {
+                this.hydra.getLogger().log(Level.SEVERE, "Couldn't find a server with this id: " + destinationServerId);
+                this.list();
+            }
+        } else {
+            this.hydra.getLogger().log(Level.SEVERE, "Couldn't find a server with this id: " + serverId);
             this.list();
         }
     }
