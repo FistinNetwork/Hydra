@@ -33,10 +33,13 @@ public class HydraServerReceiver implements HydraPacketReceiver {
 
     private void heartbeat(HeartbeatPacket packet) {
         final String serverId = packet.getApplicationId();
+        final HydraServer server = this.hydra.getServerManager().getServerByName(serverId);
 
-        System.out.println("'" + serverId + "' server is now ready !");
+        if (server != null) {
+            System.out.println("'" + serverId + "' server is now ready !");
 
-        this.hydra.getServerManager().getServerByName(serverId).setCurrentState(ServerState.READY);
+            server.setCurrentState(ServerState.READY);
+        }
     }
 
     private void listServer() {
@@ -52,18 +55,22 @@ public class HydraServerReceiver implements HydraPacketReceiver {
     private void serverInfo(AskForServerInfoPacket packet) {
         final HydraServer server = this.hydra.getServerManager().getServerByName(packet.getServerId());
 
-        final ServerInfoPacket outPacket = new ServerInfoPacket(server.toString(), server.getCurrentPlayers(), server.getSlots(), server.getCurrentState());
+        if (server != null) {
+            final ServerInfoPacket outPacket = new ServerInfoPacket(server.toString(), server.getCurrentPlayers(), server.getSlots(), server.getCurrentState());
 
-        this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.SERVERS, outPacket);
+            this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.SERVERS, outPacket);
+        }
     }
 
     private void updateServerInfo(UpdateServerInfoPacket packet) {
         final HydraServer server = this.hydra.getServerManager().getServerByName(packet.getServerId());
 
-        server.setCurrentPlayers(packet.getPlayers());
-        server.setCurrentState(packet.getCurrentState());
+        if (server != null) {
+            server.setCurrentPlayers(packet.getPlayers());
+            server.setCurrentState(packet.getCurrentState());
 
-        this.hydra.getServerManager().sendServerInfoToRedis(server);
+            this.hydra.getServerManager().sendServerInfoToRedis(server);
+        }
     }
 
 }

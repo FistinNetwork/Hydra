@@ -105,6 +105,8 @@ public class HydraServerManager {
                 this.hydra.sendPacket(HydraChannel.EVENT, new ServerStoppedPacket(server.toString(), server.getType()));
                 this.hydra.sendPacket(HydraChannel.PROXIES, new RemoveServerFromProxyPacket(server.toString()));
 
+                this.removeServerInfoFromRedis(server);
+
                 System.out.println("Stopped " + server + " server. (Checking if really in 1 minutes if Hydra is not stopping)");
 
                 return true;
@@ -128,6 +130,20 @@ public class HydraServerManager {
     public void sendServerInfoToRedis(HydraServer server) {
         final Jedis jedis = this.hydra.getHydraConnector().getRedisConnection().getJedis();
         final String hash = References.HYDRA_REDIS_HASH + server.toString() + ":";
+
+        jedis.hmset(hash, this.getServerInfo(server));
+    }
+
+    public void removeServerInfoFromRedis(HydraServer server) {
+        final Jedis jedis = this.hydra.getHydraConnector().getRedisConnection().getJedis();
+        final String hash = References.HYDRA_REDIS_HASH + server.toString() + ":";
+
+        for (Map.Entry<String, String> entry : this.getServerInfo(server).entrySet()) {
+            jedis.hdel(hash, entry.getKey());
+        }
+    }
+
+    private Map<String, String> getServerInfo(HydraServer server) {
         final Map<String, String> infos = new HashMap<>();
 
         infos.put("slots", String.valueOf(server.getSlots()));
@@ -137,7 +153,7 @@ public class HydraServerManager {
         infos.put("ip", server.getServerIp());
         infos.put("port", String.valueOf(server.getServerPort()));
 
-        jedis.hmset(hash, infos);
+        return infos;
     }
 
     public void stopAllServers() {

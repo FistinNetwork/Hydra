@@ -11,6 +11,7 @@ import fr.fistin.hydra.util.References;
 import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
 import fr.fistin.hydraconnector.protocol.packet.event.ProxyStartedPacket;
 import fr.fistin.hydraconnector.protocol.packet.event.ProxyStoppedPacket;
+import redis.clients.jedis.Jedis;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -22,6 +23,8 @@ import java.util.logging.Level;
 
 public class HydraProxyManager {
 
+    public static HydraProxy defaultProxy;
+
     private final DockerImage minecraftProxyImage = new DockerImage("itzg/bungeecord", "latest");
 
     private final Map<String, HydraProxy> proxies;
@@ -31,6 +34,7 @@ public class HydraProxyManager {
     public HydraProxyManager(Hydra hydra) {
         this.hydra = hydra;
         this.proxies = new HashMap<>();
+        defaultProxy = new HydraProxy(this.hydra, new ProxyOptions(this.hydra.getConfiguration().getProxyPluginsUrl()));
     }
 
     public void pullMinecraftProxyImage() {
@@ -62,6 +66,8 @@ public class HydraProxyManager {
         System.out.println("Started " + proxy + " proxy");
 
         this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.EVENT, new ProxyStartedPacket(proxy.toString()));
+
+        this.sendProxyInfoToRedis(proxy);
     }
 
     public boolean stopProxy(HydraProxy proxy) {
@@ -74,6 +80,8 @@ public class HydraProxyManager {
                 this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.EVENT, new ProxyStoppedPacket(proxy.toString()));
 
                 if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfProxyHasShutdown(proxy), 1, 0, TimeUnit.MINUTES);
+
+                this.removeProxyInfoFromRedis(proxy);
 
                 System.out.println("Stopped " + proxy + " proxy. (Checking if really in 1 minutes if Hydra is not stopping)");
 
@@ -132,6 +140,33 @@ public class HydraProxyManager {
                     proxy.setCurrentState(ProxyState.IDLE);
             }
         }
+    }
+
+    public void sendProxyInfoToRedis(HydraProxy proxy) {
+        final Jedis jedis = this.hydra.getHydraConnector().getRedisConnection().getJedis();
+        final String hash = References.HYDRA_REDIS_HASH + proxy.toString() + ":";
+
+        jedis.hmset(hash, this.getProxyInfo(proxy));
+    }
+
+    public void removeProxyInfoFromRedis(HydraProxy proxy) {
+        final Jedis jedis = this.hydra.getHydraConnector().getRedisConnection().getJedis();
+        final String hash = References.HYDRA_REDIS_HASH + proxy.toString() + ":";
+
+        for (Map.Entry<String, String> entry : this.getProxyInfo(proxy).entrySet()) {
+            jedis.hdel(hash, entry.getKey());
+        }
+    }
+
+    private Map<String, String> getProxyInfo(HydraProxy proxy) {
+        final Map<String, String> infos = new HashMap<>();
+
+        infos.put("state", String.valueOf(proxy.getCurrentState().getId()));
+        infos.put("startedTime", String.valueOf(proxy.getStartedTime()));
+        infos.put("ip", proxy.getProxyIp());
+        infos.put("port", String.valueOf(proxy.getProxyPort()));
+
+        return infos;
     }
 
     public void addProxy(HydraProxy proxy) {
