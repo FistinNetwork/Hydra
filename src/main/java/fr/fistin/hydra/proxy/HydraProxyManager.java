@@ -34,6 +34,10 @@ public class HydraProxyManager {
     public HydraProxyManager(Hydra hydra) {
         this.hydra = hydra;
         this.proxies = new HashMap<>();
+
+    }
+
+    public void load() {
         defaultProxy = new HydraProxy(this.hydra, new ProxyOptions(this.hydra.getConfiguration().getProxyPluginsUrl()));
     }
 

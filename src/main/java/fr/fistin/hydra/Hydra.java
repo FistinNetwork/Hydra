@@ -83,6 +83,8 @@ public class Hydra {
 
         if (!this.hydraConnector.connectToRedis()) System.exit(0);
 
+        this.proxyManager.load();
+
         // If redis connection failed
         if (!this.stopping) {
             this.logger.printHeaderMessage();
