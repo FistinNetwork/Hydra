@@ -3,8 +3,7 @@ package fr.fistin.hydra.command.model;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.command.HydraCommand;
 import fr.fistin.hydra.proxy.HydraProxy;
-import fr.fistin.hydra.proxy.HydraProxyManager;
-import fr.fistin.hydra.server.HydraServer;
+import fr.fistin.hydra.proxy.ProxyOptions;
 import fr.fistin.hydra.util.ChatColor;
 
 import java.util.Map;
@@ -22,20 +21,25 @@ public class ProxyCommand extends HydraCommand {
     @Override
     public boolean execute(String[] args) {
         if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("list")) this.list();
-            else if (args[0].equalsIgnoreCase("start")) {
+            if (args[0].equalsIgnoreCase("list")) {
+                this.list();
+            } else if (args[0].equalsIgnoreCase("start")) {
                 this.start();
             } else if (args[0].equalsIgnoreCase("stop")) {
                 if (args.length > 1 ) {
                     if (args[1] != null) this.stop(args[1]);
+                } else {
+                    System.err.println("Usage: proxy <stop> <id>");
                 }
-                else System.err.println("Usage: proxy <stop> <id>");
             } else if (args[0].equalsIgnoreCase("check")) {
                 if (args.length > 1) {
                     if (args[1] != null) this.check(args[1]);
+                } else {
+                    System.err.println("Usage: proxy <check> <id>");
                 }
+            } else {
+                System.err.println("Usage: proxy <list|start|stop|check>");
             }
-                else System.err.println("Usage: proxy <check> <id>");
         } else {
             System.err.println("Usage: proxy <list|start|stop|check>");
         }
@@ -61,7 +65,7 @@ public class ProxyCommand extends HydraCommand {
     }
 
     private void start() {
-        this.hydra.getProxyManager().stopProxy(HydraProxyManager.defaultProxy);
+        this.hydra.getProxyManager().startProxy(new HydraProxy(this.hydra, new ProxyOptions(this.hydra.getConfiguration().getProxyPluginsUrl())));
     }
 
     private void stop(String proxyId) {
@@ -91,4 +95,5 @@ public class ProxyCommand extends HydraCommand {
     public String getHelp() {
         return "Get information from a proxy, stop a proxy, start a proxy, get all proxies, etc";
     }
+
 }

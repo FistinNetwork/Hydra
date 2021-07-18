@@ -2,6 +2,7 @@ package fr.fistin.hydra;
 
 import fr.fistin.hydra.command.HydraCommandManager;
 import fr.fistin.hydra.command.model.HelpCommand;
+import fr.fistin.hydra.command.model.ProxyCommand;
 import fr.fistin.hydra.command.model.ServerCommand;
 import fr.fistin.hydra.command.model.StopCommand;
 import fr.fistin.hydra.configuration.HydraConfiguration;
@@ -83,8 +84,6 @@ public class Hydra {
 
         if (!this.hydraConnector.connectToRedis()) System.exit(0);
 
-        this.proxyManager.load();
-
         // If redis connection failed
         if (!this.stopping) {
             this.logger.printHeaderMessage();
@@ -113,12 +112,14 @@ public class Hydra {
         this.serverManager.stopAllServers();
         this.proxyManager.stopAllProxies();
 
+        this.logger.log(Level.INFO, "Waiting 20 seconds to check if all servers and proxies have shutdown !");
+
         this.scheduler.schedule(() -> {
 
             this.serverManager.checkIfAllServersHaveShutdown();
             this.proxyManager.checkIfAllProxiesHaveShutdown();
 
-        }, 1, 0, TimeUnit.MINUTES).andThen(() -> {
+        }, 20, 0, TimeUnit.SECONDS).andThen(() -> {
 
             this.hydraConnector.getRedisHandler().stop();
             this.hydraConnector.getRedisConnection().disconnect();
@@ -158,6 +159,7 @@ public class Hydra {
         this.commandManager.addCommand(new HelpCommand(this, "help"));
         this.commandManager.addCommand(new StopCommand(this, "stop"));
         this.commandManager.addCommand(new ServerCommand(this, "server"));
+        this.commandManager.addCommand(new ProxyCommand(this, "proxy"));
     }
 
     private void registerReceivers() {

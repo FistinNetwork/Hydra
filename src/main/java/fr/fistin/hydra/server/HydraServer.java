@@ -2,7 +2,7 @@ package fr.fistin.hydra.server;
 
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.scheduler.HydraTask;
-import fr.fistin.hydraconnector.api.ServerState;
+import fr.fistin.hydraconnector.common.ServerState;
 
 import java.util.UUID;
 

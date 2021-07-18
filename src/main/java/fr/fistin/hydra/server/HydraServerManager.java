@@ -9,7 +9,7 @@ import fr.fistin.hydra.docker.container.DockerContainer;
 import fr.fistin.hydra.docker.image.DockerImage;
 import fr.fistin.hydra.server.template.HydraTemplate;
 import fr.fistin.hydra.util.References;
-import fr.fistin.hydraconnector.api.ServerState;
+import fr.fistin.hydraconnector.common.ServerState;
 import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
 import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
@@ -237,4 +237,5 @@ public class HydraServerManager {
     public Map<String, HydraServer> getServers() {
         return this.servers;
     }
+
 }

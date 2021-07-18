@@ -1,12 +1,12 @@
 package fr.fistin.hydra.proxy;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.docker.container.DockerContainer;
 import fr.fistin.hydra.docker.image.DockerImage;
-import fr.fistin.hydra.server.HydraServer;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
 import fr.fistin.hydraconnector.protocol.packet.event.ProxyStartedPacket;
@@ -23,8 +23,6 @@ import java.util.logging.Level;
 
 public class HydraProxyManager {
 
-    public static HydraProxy defaultProxy;
-
     private final DockerImage minecraftProxyImage = new DockerImage("itzg/bungeecord", "latest");
 
     private final Map<String, HydraProxy> proxies;
@@ -34,11 +32,6 @@ public class HydraProxyManager {
     public HydraProxyManager(Hydra hydra) {
         this.hydra = hydra;
         this.proxies = new HashMap<>();
-
-    }
-
-    public void load() {
-        defaultProxy = new HydraProxy(this.hydra, new ProxyOptions(this.hydra.getConfiguration().getProxyPluginsUrl()));
     }
 
     public void pullMinecraftProxyImage() {
@@ -188,4 +181,5 @@ public class HydraProxyManager {
     public Map<String, HydraProxy> getProxies() {
         return this.proxies;
     }
+
 }
