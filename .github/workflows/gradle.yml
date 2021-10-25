@@ -26,10 +26,10 @@ jobs:
           TOKEN: ${{ secrets.TOKEN }}
 
       - name: Build shaded Jar
-      run: ./gradlew shadowJar
-      env:
-        USERNAME: ${{ github.actor }}
-        TOKEN: ${{ secrets.TOKEN }}
+        run: ./gradlew shadowJar
+        env:
+          USERNAME: ${{ github.actor }}
+          TOKEN: ${{ secrets.TOKEN }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
