@@ -43,7 +43,7 @@ public class HydraConfigurationManager {
          if (this.configFile.createNewFile()) {
              this.configuration = new HydraConfiguration();
 
-             this.hydra.getLogger().log(Level.INFO, String.format("%s file didn't exist !", this.configFile.getName()));
+             this.hydra.getLogger().log(Level.INFO, String.format("%s file doesn't exist !", this.configFile.getName()));
              this.hydra.getLogger().log(Level.INFO, String.format("Creating %s file...!", this.configFile.getName()));
 
              final DumperOptions options = new DumperOptions();

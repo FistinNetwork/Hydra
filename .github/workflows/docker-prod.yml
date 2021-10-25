@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build and tag image
-        run: docker build -t "ghcr.io/fistinnetwork/hydra/hydra:prod" -f Dockerfile . --build-arg USERNAME=$GITHUB_ACTOR --build-arg TOKEN=$GITHUB_TOKEN
+        run: docker build -t "ghcr.io/fistinnetwork/hydra:prod" -f Dockerfile . --build-arg USERNAME=$GITHUB_ACTOR --build-arg TOKEN=$GITHUB_TOKEN
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
@@ -24,5 +24,5 @@ jobs:
         shell: bash
 
       - name: Publish to GPR
-        run: docker push "ghcr.io/fistinnetwork/hydra/hydra:prod"
+        run: docker push "ghcr.io/fistinnetwork/hydra:prod"
         shell: bash
