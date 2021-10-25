@@ -1,0 +1,26 @@
+name: Docker Workflow
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build and tag image
+        run: docker build -t "ghcr.io/fistinnetwork/hydra/hydra:prod" -f Dockerfile .
+
+      - name: Docker login
+        run: docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        shell: bash
+
+      - name: Publish to GPR
+        run: docker push "ghcr.io/fistinnetwork/hydra/hydra:prod"
+        shell: bash

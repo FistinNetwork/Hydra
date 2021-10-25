@@ -1,9 +1,7 @@
 package fr.fistin.hydra.docker.container;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.*;
 import fr.fistin.hydra.docker.image.DockerImage;
 
 import java.util.ArrayList;
