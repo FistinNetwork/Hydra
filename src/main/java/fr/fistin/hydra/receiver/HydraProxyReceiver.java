@@ -1,11 +1,11 @@
 package fr.fistin.hydra.receiver;
 
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.api.protocol.packet.HydraPacket;
+import fr.fistin.hydra.api.protocol.packet.common.HeartbeatPacket;
+import fr.fistin.hydra.api.protocol.receiver.HydraPacketReceiver;
 import fr.fistin.hydra.proxy.HydraProxy;
 import fr.fistin.hydra.proxy.ProxyState;
-import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
-import fr.fistin.hydraconnector.protocol.packet.common.HeartbeatPacket;
-import fr.fistin.hydraconnector.protocol.receiver.HydraPacketReceiver;
 
 public class HydraProxyReceiver implements HydraPacketReceiver {
 

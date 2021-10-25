@@ -47,4 +47,5 @@ public class HydraConfiguration {
     public void setProxyPluginsUrl(String proxyPluginsUrl) {
         this.proxyPluginsUrl = proxyPluginsUrl;
     }
+
 }

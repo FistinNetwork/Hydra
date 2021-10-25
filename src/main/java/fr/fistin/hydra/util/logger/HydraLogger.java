@@ -41,19 +41,21 @@ public class HydraLogger extends Logger {
         super.log(record);
     }
 
-    public void printHeaderMessage() {
-        this.log(Level.INFO,"########################################");
-        this.log(Level.INFO,"#####          Welcome in          #####");
-        this.log(Level.INFO,"#####    Hydra - Fistin Network    #####");
-        this.log(Level.INFO,"##### Authors: Faustin - AstFaster #####");
-        this.log(Level.INFO,"########################################");
+    public static void printHeaderMessage() {
+        final String text =
+                "$$\\   $$\\                 $$\\                    \n" +
+                "$$ |  $$ |                $$ |                   \n" +
+                "$$ |  $$ |$$\\   $$\\  $$$$$$$ | $$$$$$\\  $$$$$$\\  \n" +
+                "$$$$$$$$ |$$ |  $$ |$$  __$$ |$$  __$$\\ \\____$$\\ \n" +
+                "$$  __$$ |$$ |  $$ |$$ /  $$ |$$ |  \\__|$$$$$$$ |\n" +
+                "$$ |  $$ |$$ |  $$ |$$ |  $$ |$$ |     $$  __$$ |\n" +
+                "$$ |  $$ |\\$$$$$$$ |\\$$$$$$$ |$$ |     \\$$$$$$$ |\n" +
+                "\\__|  \\__| \\____$$ | \\_______|\\__|      \\_______|\n" +
+                "          $$\\   $$ |                             \n" +
+                "          \\$$$$$$  |                             \n" +
+                "           \\______/                              ";
+
+        System.out.println(text.replaceAll("\\$", "█"));
     }
 
-    public void printFooterMessage() {
-        this.log(Level.INFO,"########################################");
-        this.log(Level.INFO,"#####           Stopping           #####");
-        this.log(Level.INFO,"#####    Hydra - Fistin Network    #####");
-        this.log(Level.INFO,"##### Authors: Faustin - AstFaster #####");
-        this.log(Level.INFO,"########################################");
-    }
 }

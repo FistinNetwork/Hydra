@@ -4,24 +4,14 @@ import fr.fistin.hydra.server.ServerOptions;
 
 public class TemplateHydraOptions {
 
-    private int slots;
     private ServerOptions serverOptions;
     private int checkAlive;
 
     public TemplateHydraOptions(){}
 
-    public TemplateHydraOptions(int slots, ServerOptions serverOptions, int checkAlive) {
-        this.slots = slots;
+    public TemplateHydraOptions(ServerOptions serverOptions, int checkAlive) {
         this.serverOptions = serverOptions;
         this.checkAlive = checkAlive;
-    }
-
-    public int getSlots() {
-        return this.slots;
-    }
-
-    public void setSlots(int slots) {
-        this.slots = slots;
     }
 
     public ServerOptions getServerOptions() {

@@ -5,17 +5,17 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Ports;
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.api.protocol.channel.HydraChannel;
+import fr.fistin.hydra.api.protocol.packet.event.EventServerStartedPacket;
+import fr.fistin.hydra.api.protocol.packet.event.EventServerStoppedPacket;
+import fr.fistin.hydra.api.protocol.packet.proxy.ProxyHookServerPacket;
+import fr.fistin.hydra.api.protocol.packet.proxy.ProxyRemoveServerPacket;
+import fr.fistin.hydra.api.protocol.packet.server.ServerEvacuatePacket;
+import fr.fistin.hydra.api.server.ServerState;
 import fr.fistin.hydra.docker.container.DockerContainer;
 import fr.fistin.hydra.docker.image.DockerImage;
 import fr.fistin.hydra.server.template.HydraTemplate;
 import fr.fistin.hydra.util.References;
-import fr.fistin.hydraconnector.common.ServerState;
-import fr.fistin.hydraconnector.protocol.channel.HydraChannel;
-import fr.fistin.hydraconnector.protocol.packet.event.ServerStartedPacket;
-import fr.fistin.hydraconnector.protocol.packet.event.ServerStoppedPacket;
-import fr.fistin.hydraconnector.protocol.packet.proxy.HookServerToProxyPacket;
-import fr.fistin.hydraconnector.protocol.packet.proxy.RemoveServerFromProxyPacket;
-import fr.fistin.hydraconnector.protocol.packet.server.EvacuateServerPacket;
 import redis.clients.jedis.Jedis;
 
 import java.net.InetAddress;
@@ -73,8 +73,8 @@ public class HydraServerManager {
 
         System.out.println("Started " + server + " server");
 
-        this.hydra.sendPacket(HydraChannel.EVENT, new ServerStartedPacket(server.toString(), server.getType()));
-        this.hydra.sendPacket(HydraChannel.PROXIES, new HookServerToProxyPacket(server.toString(), server.getServerIp(), server.getServerPort()));
+        this.hydra.sendPacket(HydraChannel.EVENT, new EventServerStartedPacket(server.toString(), server.getType()));
+        this.hydra.sendPacket(HydraChannel.PROXIES, new ProxyHookServerPacket(server.toString(), server.getServerIp(), server.getServerPort()));
 
         this.sendServerInfoToRedis(server);
     }
@@ -84,7 +84,6 @@ public class HydraServerManager {
                 this.hydra, template.getName(),
                 template.getDependencies().getMapUrl(),
                 template.getDependencies().getPluginUrl(),
-                template.getHydraOptions().getSlots(),
                 template.getHydraOptions().getCheckAlive(),
                 template.getHydraOptions().getServerOptions());
 
@@ -102,8 +101,8 @@ public class HydraServerManager {
 
                 if (!this.hydra.isStopping()) this.hydra.getScheduler().schedule(() -> this.checkIfServerHasShutdown(server), 1,  TimeUnit.MINUTES);
 
-                this.hydra.sendPacket(HydraChannel.EVENT, new ServerStoppedPacket(server.toString(), server.getType()));
-                this.hydra.sendPacket(HydraChannel.PROXIES, new RemoveServerFromProxyPacket(server.toString()));
+                this.hydra.sendPacket(HydraChannel.EVENT, new EventServerStoppedPacket(server.toString(), server.getType()));
+                this.hydra.sendPacket(HydraChannel.PROXIES, new ProxyRemoveServerPacket(server.toString()));
 
                 this.removeServerInfoFromRedis(server);
 
@@ -124,18 +123,18 @@ public class HydraServerManager {
     public void evacuateServer(String serverId, String destinationServerId) {
         System.out.println("Evacuating '" + serverId + "' server to '" + destinationServerId + "' server...");
 
-        this.hydra.getHydraConnector().getConnectionManager().sendPacket(HydraChannel.PROXIES, new EvacuateServerPacket(serverId, destinationServerId));
+        this.hydra.getAPI().getConnectionManager().sendPacket(HydraChannel.PROXIES, new ServerEvacuatePacket(serverId, destinationServerId));
     }
 
     public void sendServerInfoToRedis(HydraServer server) {
-        final Jedis jedis = this.hydra.getHydraConnector().getRedisConnection().getJedis();
+        final Jedis jedis = this.hydra.getRedisConnection().getJedis();
         final String hash = References.HYDRA_REDIS_HASH + server.toString() + ":";
 
         jedis.hmset(hash, this.getServerInfo(server));
     }
 
     public void removeServerInfoFromRedis(HydraServer server) {
-        final Jedis jedis = this.hydra.getHydraConnector().getRedisConnection().getJedis();
+        final Jedis jedis = this.hydra.getRedisConnection().getJedis();
         final String hash = References.HYDRA_REDIS_HASH + server.toString() + ":";
 
         for (Map.Entry<String, String> entry : this.getServerInfo(server).entrySet()) {
@@ -146,7 +145,6 @@ public class HydraServerManager {
     private Map<String, String> getServerInfo(HydraServer server) {
         final Map<String, String> infos = new HashMap<>();
 
-        infos.put("slots", String.valueOf(server.getSlots()));
         infos.put("currentPlayers", String.valueOf(server.getCurrentPlayers()));
         infos.put("state", String.valueOf(server.getCurrentState().getId()));
         infos.put("startedTime", String.valueOf(server.getStartedTime()));
@@ -215,8 +213,8 @@ public class HydraServerManager {
 
             this.hydra.getScheduler().cancel(server.getHealthyTask().getId());
 
-            this.hydra.sendPacket(HydraChannel.EVENT, new ServerStoppedPacket(server.toString(), server.getType()));
-            this.hydra.sendPacket(HydraChannel.PROXIES, new RemoveServerFromProxyPacket(server.toString()));
+            this.hydra.sendPacket(HydraChannel.EVENT, new EventServerStoppedPacket(server.toString(), server.getType()));
+            this.hydra.sendPacket(HydraChannel.PROXIES, new ProxyRemoveServerPacket(server.toString()));
 
             this.removeServer(server);
         }

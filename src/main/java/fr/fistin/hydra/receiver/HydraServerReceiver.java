@@ -1,12 +1,12 @@
 package fr.fistin.hydra.receiver;
 
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.api.protocol.packet.HydraPacket;
+import fr.fistin.hydra.api.protocol.packet.common.HeartbeatPacket;
+import fr.fistin.hydra.api.protocol.packet.server.ServerUpdateInfoPacket;
+import fr.fistin.hydra.api.protocol.receiver.HydraPacketReceiver;
+import fr.fistin.hydra.api.server.ServerState;
 import fr.fistin.hydra.server.HydraServer;
-import fr.fistin.hydraconnector.common.ServerState;
-import fr.fistin.hydraconnector.protocol.packet.HydraPacket;
-import fr.fistin.hydraconnector.protocol.packet.common.HeartbeatPacket;
-import fr.fistin.hydraconnector.protocol.packet.server.UpdateServerInfoPacket;
-import fr.fistin.hydraconnector.protocol.receiver.HydraPacketReceiver;
 
 public class HydraServerReceiver implements HydraPacketReceiver {
 
@@ -19,7 +19,7 @@ public class HydraServerReceiver implements HydraPacketReceiver {
     @Override
     public void receive(HydraPacket packet) {
         if (packet instanceof HeartbeatPacket) this.heartbeat((HeartbeatPacket) packet);
-        else if (packet instanceof UpdateServerInfoPacket) this.updateServerInfo((UpdateServerInfoPacket) packet);
+        else if (packet instanceof ServerUpdateInfoPacket) this.updateServerInfo((ServerUpdateInfoPacket) packet);
     }
 
     private void heartbeat(HeartbeatPacket packet) {
@@ -33,7 +33,7 @@ public class HydraServerReceiver implements HydraPacketReceiver {
         }
     }
 
-    private void updateServerInfo(UpdateServerInfoPacket packet) {
+    private void updateServerInfo(ServerUpdateInfoPacket packet) {
         final HydraServer server = this.hydra.getServerManager().getServerByName(packet.getServerId());
 
         if (server != null) {

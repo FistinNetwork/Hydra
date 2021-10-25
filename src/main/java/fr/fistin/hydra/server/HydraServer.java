@@ -1,8 +1,8 @@
 package fr.fistin.hydra.server;
 
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.api.server.ServerState;
 import fr.fistin.hydra.scheduler.HydraTask;
-import fr.fistin.hydraconnector.common.ServerState;
 
 import java.util.UUID;
 
@@ -18,7 +18,6 @@ public class HydraServer {
     protected String mapUrl;
     protected String pluginUrl;
 
-    protected int slots;
     protected int currentPlayers = 0;
 
     protected ServerOptions options;
@@ -33,13 +32,12 @@ public class HydraServer {
 
     protected final Hydra hydra;
 
-    public HydraServer(Hydra hydra, String type, String mapUrl, String pluginUrl, int slots, int checkAlive, ServerOptions options) {
+    public HydraServer(Hydra hydra, String type, String mapUrl, String pluginUrl, int checkAlive, ServerOptions options) {
         this.hydra = hydra;
         this.uuid = UUID.randomUUID();
         this.type = type;
         this.mapUrl = mapUrl;
         this.pluginUrl = pluginUrl;
-        this.slots = slots;
         this.checkAlive = checkAlive;
         this.options = options;
         this.currentState = ServerState.CREATING;
@@ -107,14 +105,6 @@ public class HydraServer {
         this.pluginUrl = pluginUrl;
     }
 
-    public int getSlots() {
-        return this.slots;
-    }
-
-    public void setSlots(int slots) {
-        this.slots = slots;
-    }
-
     public int getCurrentPlayers() {
         return this.currentPlayers;
     }
@@ -175,4 +165,5 @@ public class HydraServer {
     public String toString() {
         return this.type + "-" + this.uuid.toString().split("-")[0];
     }
+
 }
