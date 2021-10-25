@@ -5,7 +5,7 @@ ARG USERNAME
 ENV USERNAME=$USERNAME
 ARG TOKEN
 ENV TOKEN=$TOKEN
-RUN gradle shadowJar
+RUN gradle build
 
 FROM openjdk:8-jre-alpine
 WORKDIR /usr/app/
