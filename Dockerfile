@@ -11,4 +11,4 @@ FROM openjdk:8-jre-alpine
 WORKDIR /usr/app/
 ENV MEMORY="1G"
 COPY --from=build /usr/app/build/libs/Hydra-all.jar /usr/app/Hydra.jar
-ENTRYPOINT ["java", "-Xmx${MEMORY}", "-jar", "Hydra.jar"]
+ENTRYPOINT java -Xmx${MEMORY} -jar Hydra.jar
