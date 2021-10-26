@@ -1,3 +1,4 @@
 redisIp: host.docker.internal
 redisPassword: test-redis
 redisPort: 6379
+proxyPluginsUrl:
