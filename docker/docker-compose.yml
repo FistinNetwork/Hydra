@@ -1,0 +1,12 @@
+version: "3.8"
+
+networks:
+  fistin:
+
+services:
+  hydra:
+    image: ghcr.io/fistinnetwork/hydra:dev
+    networks:
+      - fistin
+    volumes:
+      - /hydra/hydra-config.yml:/

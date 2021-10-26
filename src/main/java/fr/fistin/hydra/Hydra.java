@@ -10,9 +10,7 @@ import fr.fistin.hydra.command.model.ServerCommand;
 import fr.fistin.hydra.command.model.StopCommand;
 import fr.fistin.hydra.configuration.HydraConfiguration;
 import fr.fistin.hydra.configuration.HydraConfigurationManager;
-import fr.fistin.hydra.docker.DockerConnector;
-import fr.fistin.hydra.docker.container.DockerContainerManager;
-import fr.fistin.hydra.docker.image.DockerImageManager;
+import fr.fistin.hydra.docker.Docker;
 import fr.fistin.hydra.proxy.HydraProxyManager;
 import fr.fistin.hydra.receiver.HydraProxyReceiver;
 import fr.fistin.hydra.receiver.HydraQueryReceiver;
@@ -43,9 +41,7 @@ public class Hydra {
     /**
      * Docker
      */
-    private final DockerConnector docker;
-    private final DockerContainerManager containerManager;
-    private final DockerImageManager imageManager;
+    private Docker docker;
 
     /**
      * Redis
@@ -63,7 +59,10 @@ public class Hydra {
     private final HydraTemplateManager templateManager;
     private final HydraCommandManager commandManager;
 
-    /** Logger */
+
+    /**
+     * Logger
+     */
     private ConsoleReader consoleReader;
     private HydraLogger logger;
 
@@ -74,9 +73,6 @@ public class Hydra {
         this.serverManager = new HydraServerManager(this);
         this.templateManager = new HydraTemplateManager(this);
         this.commandManager = new HydraCommandManager(this);
-        this.docker = new DockerConnector();
-        this.containerManager = new DockerContainerManager(this);
-        this.imageManager = new DockerImageManager(this);
     }
 
     public void start() {
@@ -86,31 +82,23 @@ public class Hydra {
         this.setupLogger();
 
         this.configurationManager.loadConfiguration();
-
         this.redisConnection = new RedisConnection(this.getConfiguration());
 
         if (!this.redisConnection.connect()) System.exit(-1);
 
         this.api = new HydraAPI(References.GSON, this.redisConnection.getJedisPool());
+        this.api.start();
 
         this.templateManager.createTemplatesFolder();
+        this.docker = new Docker(this);
+        this.templateManager.loadAllTemplatesFromTemplatesFolder();
 
-        // If redis connection failed
-        if (!this.stopping) {
-            this.proxyManager.pullMinecraftProxyImage();
-            this.serverManager.pullMinecraftServerImage();
+        this.registerCommands();
+        this.registerReceivers();
 
-            this.templateManager.loadAllTemplatesFromTemplatesFolder();
+        this.running = true;
 
-            this.api.start();
-
-            this.registerCommands();
-            this.registerReceivers();
-
-            this.running = true;
-
-            this.scheduler.runTaskAsynchronously(this.commandManager::start);
-        }
+        this.scheduler.runTaskAsynchronously(this.commandManager::start);
     }
 
     public void shutdown() {
@@ -229,16 +217,8 @@ public class Hydra {
         return this.redisConnection;
     }
 
-    public DockerConnector getDocker() {
+    public Docker getDocker() {
         return this.docker;
-    }
-
-    public DockerContainerManager getContainerManager() {
-        return this.containerManager;
-    }
-
-    public DockerImageManager getImageManager() {
-        return this.imageManager;
     }
 
     public ExecutorService getExecutorService() {

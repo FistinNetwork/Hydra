@@ -1,7 +1,9 @@
 package fr.fistin.hydra.docker.container;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Ports;
 import fr.fistin.hydra.docker.image.DockerImage;
 
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ public class DockerContainer {
     private int publishedPort;
     private int targetPort;
 
+    private boolean autoRemove;
+
     public DockerContainer(String name, DockerImage image) {
         this.name = name;
         this.image = image;
@@ -33,60 +37,77 @@ public class DockerContainer {
         return this.name;
     }
 
-    public void setName(String name) {
+    public DockerContainer setName(String name) {
         this.name = name;
+        return this;
     }
 
     public DockerImage getImage() {
         return this.image;
     }
 
-    public void setImage(DockerImage image) {
+    public DockerContainer setImage(DockerImage image) {
         this.image = image;
+        return this;
     }
 
     public String getHostname() {
         return this.hostname;
     }
 
-    public void setHostname(String hostname) {
+    public DockerContainer setHostname(String hostname) {
         this.hostname = hostname;
+        return this;
     }
 
     public String getId() {
         return this.id;
     }
 
-    public void addEnvs(String... envs) {
+    public DockerContainer addEnvs(String... envs) {
         this.envs.addAll(Arrays.asList(envs));
+        return this;
     }
 
-    public void removeEnvs(String... envs) {
+    public DockerContainer removeEnvs(String... envs) {
         this.envs.removeAll(Arrays.asList(envs));
+        return this;
     }
 
     public List<String> getEnvs() {
         return this.envs;
     }
 
-    public void setEnvs(List<String> envs) {
+    public DockerContainer setEnvs(List<String> envs) {
         this.envs = envs;
+        return this;
     }
 
     public int getPublishedPort() {
         return this.publishedPort;
     }
 
-    public void setPublishedPort(int publishedPort) {
+    public DockerContainer setPublishedPort(int publishedPort) {
         this.publishedPort = publishedPort;
+        return this;
     }
 
     public int getTargetPort() {
         return this.targetPort;
     }
 
-    public void setTargetPort(int targetPort) {
+    public DockerContainer setTargetPort(int targetPort) {
         this.targetPort = targetPort;
+        return this;
+    }
+
+    public boolean isAutoRemove() {
+        return this.autoRemove;
+    }
+
+    public DockerContainer setAutoRemove(boolean autoRemove) {
+        this.autoRemove = autoRemove;
+        return this;
     }
 
     public String createContainerCmd(DockerClient dockerClient) {
@@ -100,7 +121,7 @@ public class DockerContainer {
                 .withEnv(this.envs)
                 .withHostConfig(new HostConfig()
                         .withPortBindings(portsBindings)
-                        .withAutoRemove(true)
+                        .withAutoRemove(this.autoRemove)
                 ).exec().getId();
 
         return this.id = container;

@@ -39,10 +39,6 @@ public class HydraServerManager {
         this.servers = new HashMap<>();
     }
 
-    public void pullMinecraftServerImage() {
-        this.hydra.getImageManager().pullImage(this.minecraftServerImage);
-    }
-
     public void startServer(HydraServer server) {
         final List<String> env = server.getOptions().getEnv();
         if (server.getMapUrl() != null) env.add("WORLD=" + server.getMapUrl());
@@ -53,7 +49,7 @@ public class HydraServerManager {
         container.setEnvs(env);
         container.setPublishedPort(25565);
 
-        server.setContainer(this.hydra.getContainerManager().runContainer(container));
+        server.setContainer(this.hydra.getDocker().getContainerManager().runContainer(container));
         server.setStartedTime(System.currentTimeMillis());
 
         try {
@@ -66,7 +62,7 @@ public class HydraServerManager {
             if (server.getCurrentState() != ServerState.SHUTDOWN) server.checkStatus();
         }, server.getCheckAlive(), server.getCheckAlive(), TimeUnit.MILLISECONDS));
 
-        final Ports.Binding[] bindings = this.hydra.getContainerManager().inspectContainer(container).getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25565));
+        final Ports.Binding[] bindings = this.hydra.getDocker().getContainerManager().inspectContainer(container).getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25565));
         final int port = Integer.parseInt(bindings[0].getHostPortSpec());
 
         server.setServerPort(port);
@@ -93,7 +89,7 @@ public class HydraServerManager {
     public boolean stopServer(HydraServer server) {
         if (!server.getContainer().isEmpty()) {
             try {
-                this.hydra.getContainerManager().stopContainer(server.getContainer());
+                this.hydra.getDocker().getContainerManager().stopContainer(server.getContainer());
 
                 server.setCurrentState(ServerState.SHUTDOWN);
 
@@ -185,7 +181,7 @@ public class HydraServerManager {
 
     public void checkStatus(HydraServer server) {
         if (!server.getContainer().isEmpty()) {
-            final List<Container> containers = this.hydra.getContainerManager().listContainers();
+            final List<Container> containers = this.hydra.getDocker().getContainerManager().listContainers();
 
             for (Container container : containers) {
                 if (container.getId().equals(server.getContainer())) {

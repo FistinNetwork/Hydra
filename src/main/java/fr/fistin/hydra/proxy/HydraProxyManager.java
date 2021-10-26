@@ -34,17 +34,13 @@ public class HydraProxyManager {
         this.proxies = new HashMap<>();
     }
 
-    public void pullMinecraftProxyImage() {
-        this.hydra.getImageManager().pullImage(this.minecraftProxyImage);
-    }
-
     public void startProxy(HydraProxy proxy) {
         final DockerContainer container = new DockerContainer(proxy.toString(), this.minecraftProxyImage);
         container.setHostname(proxy.toString());
         container.setEnvs(proxy.getOptions().getEnvs());
         container.setPublishedPort(25577);
 
-        proxy.setContainer(this.hydra.getContainerManager().runContainer(container));
+        proxy.setContainer(this.hydra.getDocker().getContainerManager().runContainer(container));
         proxy.setStartedTime(System.currentTimeMillis());
 
         this.proxies.put(proxy.toString(), proxy);
@@ -55,7 +51,7 @@ public class HydraProxyManager {
             e.printStackTrace();
         }
 
-        final Ports.Binding[] bindings = this.hydra.getContainerManager().inspectContainer(container).getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25577));
+        final Ports.Binding[] bindings = this.hydra.getDocker().getContainerManager().inspectContainer(container).getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(25577));
         final int port = Integer.parseInt(bindings[0].getHostPortSpec());
 
         proxy.setProxyPort(port);
@@ -70,7 +66,7 @@ public class HydraProxyManager {
     public boolean stopProxy(HydraProxy proxy) {
         if (!proxy.getContainer().isEmpty()) {
             try {
-                this.hydra.getContainerManager().stopContainer(proxy.getContainer());
+                this.hydra.getDocker().getContainerManager().stopContainer(proxy.getContainer());
 
                 proxy.setCurrentState(ProxyState.SHUTDOWN);
 

@@ -3,9 +3,11 @@ package fr.fistin.hydra.docker.container;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
-import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.docker.Docker;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DockerContainerManager {
 
@@ -13,8 +15,8 @@ public class DockerContainerManager {
 
     private final DockerClient dockerClient;
 
-    public DockerContainerManager(Hydra hydra) {
-        this.dockerClient = hydra.getDocker().getDockerClient();
+    public DockerContainerManager(Docker docker) {
+        this.dockerClient = docker.getDockerClient();
         this.containers = new HashMap<>();
     }
 

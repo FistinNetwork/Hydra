@@ -4,7 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.Image;
-import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.docker.Docker;
 
 import java.io.Closeable;
 import java.io.File;
@@ -14,8 +14,8 @@ public class DockerImageManager {
 
     private final DockerClient dockerClient;
 
-    public DockerImageManager(Hydra hydra) {
-        this.dockerClient = hydra.getDocker().getDockerClient();
+    public DockerImageManager(Docker docker) {
+        this.dockerClient = docker.getDockerClient();
     }
 
     public void pullImage(DockerImage image) {
