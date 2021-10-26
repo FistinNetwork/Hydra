@@ -1,6 +1,6 @@
 FROM gradle:7.2.0-jdk8 AS build
 WORKDIR /usr/app/
-COPY .. .
+COPY . .
 ARG USERNAME
 ENV USERNAME=$USERNAME
 ARG TOKEN
