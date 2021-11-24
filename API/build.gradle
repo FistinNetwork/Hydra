@@ -1,0 +1,57 @@
+apply plugin: 'maven-publish'
+
+version = '1.0.0'
+archivesBaseName = 'Hydra-API'
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: classes) {
+    classifier 'javadoc'
+    from javadoc
+}
+
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact tasks.sourcesJar
+            artifact tasks.javadocJar
+
+            pom {
+                groupId = project.group
+                artifactId = 'hydra-api'
+                version = project.version
+                name = 'HydraAPI'
+                description = 'Official API of Hydra'
+                url = 'https://github.com/FistinNetwork/Hydra'
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            credentials {
+                username System.getenv('USERNAME')
+                password System.getenv('TOKEN')
+            }
+            name = "Hyrame_maven"
+            url = "https://maven.pkg.github.com/FistinNetwork/Hydra"
+        }
+    }
+}
+
+dependencies {
+    api 'redis.clients:jedis:3.7.0'
+    api 'com.google.code.gson:gson:2.8.9'
+}

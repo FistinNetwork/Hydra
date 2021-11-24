@@ -1,37 +1,35 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.0.0"
+    id "com.github.johnrengelman.shadow" version "7.1.0"
 }
 
-apply plugin: 'idea'
-apply plugin: 'java-library'
+allprojects {
 
-group 'fr.fistin'
-version '1.4.0'
-archivesBaseName = 'Hydra'
+    apply plugin: 'idea'
+    apply plugin: 'java-library'
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
-    }
-}
+    group = 'fr.fistin'
+    archivesBaseName = 'Hydra'
 
-compileJava {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    options.encoding = 'UTF-8'
-}
-
-repositories {
-    mavenCentral()
-
-    maven {
-        name = 'HydraAPI_maven'
-        url 'https://maven.pkg.github.com/FistinNetwork/HydraAPI/'
-        credentials {
-            username System.getenv('USERNAME')
-            password System.getenv('TOKEN')
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(16)
         }
     }
+
+    compileJava {
+        sourceCompatibility = JavaVersion.VERSION_16
+        options.encoding = 'UTF-8'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {}
+
 }
+
+version = '1.5.0'
 
 shadowJar {
     configurations = [project.configurations.runtimeClasspath]
@@ -42,7 +40,7 @@ shadowJar {
 }
 
 dependencies {
-    implementation 'fr.fistin:hydra-api:2.0.1'
+    implementation project(":API")
     implementation 'com.github.docker-java:docker-java:3.2.12'
     implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.12'
     implementation 'org.yaml:snakeyaml:1.29'

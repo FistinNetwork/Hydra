@@ -1,6 +1,5 @@
 package fr.fistin.hydra.redis;
 
-import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.configuration.HydraConfiguration;
 import fr.fistin.hydra.util.References;
 import redis.clients.jedis.Jedis;
@@ -17,6 +16,8 @@ public class RedisConnection {
     private JedisPool jedisPool;
 
     private Thread reconnectTask;
+
+    private boolean connected;
 
     private final String redisHost;
     private final int redisPort;
@@ -39,7 +40,9 @@ public class RedisConnection {
         try {
             this.jedisPool.getResource().close();
 
-            System.out.println(References.HYDRA + " is now connected to Redis database!");
+            this.connected = true;
+
+            System.out.println(References.NAME + " is now connected with Redis database.");
 
             this.startReconnectTask();
 
@@ -78,16 +81,20 @@ public class RedisConnection {
             System.err.println("Encountered exception in Redis reconnection task. Error:" + e.getMessage());
             System.err.println("Error in Redis database connection ! Trying to reconnect...");
 
+            this.connected = false;
+
             this.connect();
         }
     }
 
     public void disconnect() {
-        System.out.println("Disconnecting " + References.HYDRA + " from Redis database...");
+        System.out.println("Disconnecting " + References.NAME + " from Redis database...");
 
         if (this.reconnectTask != null && this.reconnectTask.isAlive()) {
             this.reconnectTask.interrupt();
         }
+
+        this.connected = false;
 
         this.jedisPool.close();
     }
@@ -98,6 +105,11 @@ public class RedisConnection {
 
     public Jedis getJedis() {
         return this.jedisPool.getResource();
+    }
+
+
+    public boolean isConnected() {
+        return this.connected;
     }
 
 }

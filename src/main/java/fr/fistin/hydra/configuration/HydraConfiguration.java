@@ -5,16 +5,14 @@ public class HydraConfiguration {
     private String redisIp = "127.0.0.1";
     private int redisPort = 6379;
     private String redisPassword = "";
-    private String proxyPluginsUrl = "";
     private boolean production;
 
     public HydraConfiguration() {}
 
-    public HydraConfiguration(String redisIp, int redisPort, String redisPassword, String proxyPluginsUrl, boolean production) {
+    public HydraConfiguration(String redisIp, int redisPort, String redisPassword, boolean production) {
         this.redisIp = redisIp;
         this.redisPort = redisPort;
         this.redisPassword = redisPassword;
-        this.proxyPluginsUrl = proxyPluginsUrl;
         this.production = production;
     }
 
@@ -40,14 +38,6 @@ public class HydraConfiguration {
 
     public void setRedisPassword(String redisPassword) {
         this.redisPassword = redisPassword;
-    }
-
-    public String getProxyPluginsUrl() {
-        return this.proxyPluginsUrl;
-    }
-
-    public void setProxyPluginsUrl(String proxyPluginsUrl) {
-        this.proxyPluginsUrl = proxyPluginsUrl;
     }
 
     public boolean isProduction() {
