@@ -1,11 +1,9 @@
 package fr.fistin.hydra;
 
 import fr.fistin.hydra.api.HydraAPI;
-import fr.fistin.hydra.configuration.HydraConfiguration;
-import fr.fistin.hydra.configuration.HydraConfigurationManager;
 import fr.fistin.hydra.docker.Docker;
 import fr.fistin.hydra.proxy.HydraProxyManager;
-import fr.fistin.hydra.redis.RedisConnection;
+import fr.fistin.hydra.redis.HydraRedisConnection;
 import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.HydraLogger;
@@ -25,7 +23,6 @@ public class Hydra {
 
     /** Hydra */
     private HydraAPI api;
-    private final HydraConfigurationManager configurationManager;
     private final HydraProxyManager proxyManager;
     private final HydraServerManager serverManager;
 
@@ -36,10 +33,9 @@ public class Hydra {
     private Docker docker;
 
     /** Redis */
-    private RedisConnection redisConnection;
+    private HydraRedisConnection redisConnection;
 
     public Hydra() {
-        this.configurationManager = new HydraConfigurationManager(this);
         this.proxyManager = new HydraProxyManager(this);
         this.serverManager = new HydraServerManager(this);
     }
@@ -50,20 +46,25 @@ public class Hydra {
         this.setupConsoleReader();
         this.setupLogger();
 
-        this.configurationManager.loadConfiguration();
-        this.redisConnection = new RedisConnection(this.getConfiguration());
+        System.out.println("Starting " + References.NAME + "...");
+
+        this.docker = new Docker();
+        this.redisConnection = new HydraRedisConnection();
 
         if (!this.redisConnection.connect()) {
             System.exit(-1);
         }
 
         this.api = new HydraAPI(new HydraProvider(this));
-        this.docker = new Docker(this);
+
+        this.serverManager.startServer();
 
         this.running = true;
     }
 
     public void shutdown() {
+        System.out.println("Stopping " + References.NAME + "...");
+
         this.running = false;
 
         if (this.redisConnection != null && this.redisConnection.isConnected()) {
@@ -71,7 +72,7 @@ public class Hydra {
             this.redisConnection.disconnect();
         }
 
-        this.logger.log(Level.INFO, "Hydra is now down. See you soon !");
+        this.logger.log(Level.INFO, "Hydra is now down. See you soon!");
 
         System.exit(0);
     }
@@ -112,14 +113,6 @@ public class Hydra {
         return this.logger;
     }
 
-    public HydraConfiguration getConfiguration() {
-        return this.configurationManager.getConfiguration();
-    }
-
-    public HydraConfigurationManager getConfigurationManager() {
-        return this.configurationManager;
-    }
-
     public HydraProxyManager getProxyManager() {
         return this.proxyManager;
     }
@@ -128,7 +121,7 @@ public class Hydra {
         return this.serverManager;
     }
 
-    public RedisConnection getRedisConnection() {
+    public HydraRedisConnection getRedisConnection() {
         return this.redisConnection;
     }
 

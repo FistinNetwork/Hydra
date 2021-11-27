@@ -8,28 +8,28 @@ import java.util.*;
 
 public class DockerService {
 
-    private final String name;
+    protected final String name;
 
-    private final DockerImage image;
-    private final DockerNetwork network;
+    protected final DockerImage image;
+    protected final DockerNetwork network;
 
-    private String hostname;
+    protected String hostname;
 
-    private List<String> envs;
+    protected List<String> envs;
 
-    private final Map<String, String> mount;
-    private final Map<Integer, Integer> portMap;
+    protected final Map<Integer, Integer> ports;
+    protected final Map<String, String> labels;
 
-    private int publishedPort;
-    private int targetPort;
+    protected int publishedPort;
+    protected int targetPort;
 
     public DockerService(String name, DockerImage image, DockerNetwork network) {
         this.name = name;
         this.image = image;
         this.network = network;
         this.envs = new ArrayList<>();
-        this.mount = new HashMap<>();
-        this.portMap = new HashMap<>();
+        this.ports = new HashMap<>();
+        this.labels = new HashMap<>();
     }
 
 
@@ -45,64 +45,75 @@ public class DockerService {
         return this.network;
     }
 
-    public void addEnv(String env) {
+    public DockerService addEnv(String env) {
         this.envs.add(env);
+        return this;
     }
 
-    public void addEnv(String key, String value) {
+    public DockerService addEnv(String key, String value) {
         this.envs.add(key + "=" + value);
+        return this;
     }
 
-    public void removeEnv(String env) {
+    public DockerService removeEnv(String env) {
         this.envs.remove(env);
+        return this;
     }
 
     public List<String> getEnvs() {
         return this.envs;
     }
 
-    public void setEnvs(List<String> envs) {
+    public DockerService withEnvs(List<String> envs) {
         this.envs = envs;
+        return this;
     }
 
-    public void addMount(String local, String container) {
-        this.mount.put(local, container);
+    public DockerService addLabel(String name, String value) {
+        this.labels.put(name, value);
+        return this;
     }
 
-    public void removeMount(String local, String container) {
-        this.mount.remove(local, container);
+    public DockerService removeLabel(String name) {
+        this.labels.remove(name);
+        return this;
     }
 
-    public void addPort(int local, int container) {
-        this.portMap.put(local, container);
+    public DockerService addPort(int local, int container) {
+        this.ports.put(local, container);
+        return this;
     }
 
-    public void removePort(int local, int container) {
-        this.portMap.remove(local, container);
+    public DockerService removePort(int local, int container) {
+        this.ports.remove(local, container);
+        return this;
     }
 
-    public Map<String, String> getMount() {
-        return mount;
+    public Map<String, String> getLabels() {
+        return this.labels;
     }
 
-    public Map<Integer, Integer> getPortMap() {
-        return portMap;
+    public Map<Integer, Integer> getPorts() {
+        return this.ports;
     }
 
-    public void setHostname(String hostname) {
+    public DockerService withHostname(String hostname) {
         this.hostname = hostname;
+        return this;
     }
 
     public String getHostname() {
         return hostname;
     }
 
-    public void setPublishedPort(int publishedPort) {
+    public DockerService withPublishedPort(int publishedPort) {
         this.publishedPort = publishedPort;
+        return this;
     }
 
-    public void setTargetPort(int targetPort) {
+    public DockerService withTargetPort(int targetPort) {
         this.targetPort = targetPort;
+        return this;
     }
 
     public ServiceSpec toSwarmService() {
@@ -126,7 +137,8 @@ public class DockerService {
         return new ServiceSpec()
                 .withName(this.name)
                 .withTaskTemplate(taskSpec)
-                .withEndpointSpec(endpointSpec);
+                .withEndpointSpec(endpointSpec)
+                .withLabels(this.labels);
     }
 
 }

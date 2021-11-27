@@ -53,19 +53,22 @@ public class HydraPubSub {
         this.subscriberThread = new Thread(() -> {
             while (this.running) {
                 final Jedis jedis = this.hydraAPI.getRedisResource();
-                final String[] channels = this.subscriber.getChannelsSubscribed().toArray(new String[0]);
 
-                if (channels.length > 0) {
-                    jedis.subscribe(this.subscriber, channels);
+                if (jedis != null) {
+                    final String[] channels = this.subscriber.getChannelsSubscribed().toArray(new String[0]);
+
+                    if (channels.length > 0) {
+                        jedis.subscribe(this.subscriber, channels);
+                    }
+
+                    final String[] patterns = this.subscriber.getPatternsSubscribed().toArray(new String[0]);
+
+                    if (patterns.length > 0) {
+                        jedis.psubscribe(this.subscriber, patterns);
+                    }
+
+                    jedis.close();
                 }
-
-                final String[] patterns = this.subscriber.getPatternsSubscribed().toArray(new String[0]);
-
-                if (patterns.length > 0) {
-                    jedis.psubscribe(this.subscriber, patterns);
-                }
-
-                jedis.close();
             }
         });
         this.subscriberThread.start();

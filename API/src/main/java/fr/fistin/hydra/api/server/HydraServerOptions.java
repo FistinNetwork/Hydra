@@ -65,20 +65,21 @@ public class HydraServerOptions {
         this.spawnProtection = spawnProtection;
     }
 
-    public List<String> getEnv() {
-        final List<String> env = new ArrayList<>();
+    public List<String> getEnvs() {
+        final List<String> envs = new ArrayList<>();
 
-        env.add("ALLOW_NETHER=" + this.nether);
-        env.add("ANNOUNCE_PLAYER_ACHIEVEMENTS=" + this.broadcastAchievements);
-        env.add("DIFFICULTY=" + this.difficulty);
-        env.add("SPAWN_PROTECTION=" + this.spawnProtection);
-        env.add("ALLOW_FLIGHT=" + this.flight);
-        env.add("EULA=true");
-        env.add("TYPE=SPIGOT");
-        env.add("VERSION=1.8.8-R0.1-SNAPSHOT-latest");
-        env.add("ONLINE_MODE=FALSE");
+        envs.add("ALLOW_NETHER=" + this.nether);
+        envs.add("ANNOUNCE_PLAYER_ACHIEVEMENTS=" + this.broadcastAchievements);
+        envs.add("DIFFICULTY=" + this.difficulty);
+        envs.add("SPAWN_PROTECTION=" + this.spawnProtection);
+        envs.add("ALLOW_FLIGHT=" + this.flight);
+        envs.add("EULA=true");
+        envs.add("TYPE=SPIGOT");
+        envs.add("VERSION=1.8.8-R0.1-SNAPSHOT-latest");
+        envs.add("ENABLE_RCON=false");
+        envs.add("ONLINE_MODE=false");
 
-        return env;
+        return envs;
     }
 
 }

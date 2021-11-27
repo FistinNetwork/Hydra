@@ -1,6 +1,5 @@
 package fr.fistin.hydra.redis;
 
-import fr.fistin.hydra.configuration.HydraConfiguration;
 import fr.fistin.hydra.util.References;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -11,7 +10,7 @@ import redis.clients.jedis.JedisPoolConfig;
  * Created by AstFaster
  * on 25/10/2021 at 09:51
  */
-public class RedisConnection {
+public class HydraRedisConnection {
 
     private JedisPool jedisPool;
 
@@ -23,10 +22,10 @@ public class RedisConnection {
     private final int redisPort;
     private final String redisPass;
 
-    public RedisConnection(HydraConfiguration configuration) {
-        this.redisHost = configuration.getRedisIp();
-        this.redisPort = configuration.getRedisPort();
-        this.redisPass = configuration.getRedisPassword();
+    public HydraRedisConnection() {
+        this.redisHost = References.STACK_NAME + "_" + System.getenv("REDIS_HOST");
+        this.redisPort = Integer.parseInt(System.getenv("REDIS_PORT"));
+        this.redisPass = System.getenv("REDIS_PASS");
     }
 
     public boolean connect() {
@@ -35,10 +34,14 @@ public class RedisConnection {
         config.setJmxEnabled(false);
         config.setMaxTotal(-1);
 
-        this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 0, this.redisPass);
+        if (this.redisPass != null && !this.redisPass.isEmpty()) {
+            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 0, this.redisPass);
+        } else {
+            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 0);
+        }
 
         try {
-            this.jedisPool.getResource().close();
+            this.getJedis().close();
 
             this.connected = true;
 
@@ -76,7 +79,7 @@ public class RedisConnection {
 
     private void reconnect() {
         try {
-            this.jedisPool.getResource().close();
+            this.getJedis().close();
         } catch (Exception e) {
             System.err.println("Encountered exception in Redis reconnection task. Error:" + e.getMessage());
             System.err.println("Error in Redis database connection ! Trying to reconnect...");
@@ -106,7 +109,6 @@ public class RedisConnection {
     public Jedis getJedis() {
         return this.jedisPool.getResource();
     }
-
 
     public boolean isConnected() {
         return this.connected;

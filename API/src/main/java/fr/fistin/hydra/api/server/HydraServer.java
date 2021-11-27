@@ -42,6 +42,15 @@ public class HydraServer {
     }
 
     /**
+     * Constructor of {@link HydraServer}
+     *
+     * @param type Server type
+     */
+    public HydraServer(String type) {
+        this(type, System.currentTimeMillis());
+    }
+
+    /**
      * Get server unique id
      *
      * @return {@link UUID}

@@ -3,7 +3,9 @@ package fr.fistin.hydra.api.protocol;
 import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 import fr.fistin.hydra.api.protocol.packet.HydraPacketRequest;
+import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
 import fr.fistin.hydra.api.protocol.receiver.IHydraPacketReceiver;
+import fr.fistin.hydra.api.util.Pair;
 
 /**
  * Project: Hydra
@@ -35,7 +37,14 @@ public class HydraConnection {
             final HydraPacket packet = this.decode(message);
 
             if (packet != null) {
-                receiver.receive(channel, packet);
+                final Pair<HydraResponse, String> pair = receiver.receive(channel, packet);
+                final HydraResponse response = pair.getFirst();
+
+                if (response != HydraResponse.NONE) {
+                    final HydraResponsePacket responsePacket = new HydraResponsePacket(packet.getUniqueId(), response, pair.getSecond());
+
+                    this.sendPacket(channel, responsePacket).exec();
+                }
             }
         });
     }

@@ -10,6 +10,7 @@ import fr.fistin.hydra.docker.container.DockerContainerManager;
 import fr.fistin.hydra.docker.image.DockerImageManager;
 import fr.fistin.hydra.docker.network.DockerNetworkManager;
 import fr.fistin.hydra.docker.swarm.DockerSwarmManager;
+import fr.fistin.hydra.util.References;
 
 public class Docker {
 
@@ -24,9 +25,11 @@ public class Docker {
     private final ApacheDockerHttpClient httpClient;
     private final DockerClient dockerClient;
 
-    public Docker(Hydra hydra) {
+    public Docker() {
+        final String url = DockerUrl.get().getUrl();
+
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .withDockerHost(this.url(hydra))
+                .withDockerHost(url)
                 .build();
         this.httpClient = new ApacheDockerHttpClient.Builder().dockerHost(this.config.getDockerHost()).sslConfig(this.config.getSSLConfig()).build();
         this.dockerClient = DockerClientImpl.getInstance(this.config, this.httpClient);
@@ -34,10 +37,8 @@ public class Docker {
         this.imageManager = new DockerImageManager(this);
         this.networkManager = new DockerNetworkManager(this);
         this.swarmManager = new DockerSwarmManager(this);
-    }
 
-    private String url(Hydra hydra) {
-        return hydra.getConfiguration().isProduction() ? DockerUrl.INTERNAL.getUrl() : DockerUrl.get().getUrl();
+        System.out.println(References.NAME + " is now connected to Docker with url: " + url + ".");
     }
 
     public DockerClientConfig getConfig() {

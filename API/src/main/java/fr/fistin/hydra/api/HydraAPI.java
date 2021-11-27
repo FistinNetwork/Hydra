@@ -58,6 +58,8 @@ public class HydraAPI {
      */
     public void stop() {
         log("Stopping " + NAME + "...");
+
+        this.pubSub.stop();
     }
 
     /**

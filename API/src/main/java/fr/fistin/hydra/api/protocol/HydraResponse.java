@@ -7,6 +7,9 @@ package fr.fistin.hydra.api.protocol;
  */
 public enum HydraResponse {
 
+    /** No response to send back */
+    NONE,
+
     /** The request has been taken */
     OK,
 
