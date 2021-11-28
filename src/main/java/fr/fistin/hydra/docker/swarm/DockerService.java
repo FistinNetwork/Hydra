@@ -17,7 +17,6 @@ public class DockerService {
 
     protected List<String> envs;
 
-    protected final Map<Integer, Integer> ports;
     protected final Map<String, String> labels;
 
     protected int publishedPort;
@@ -28,7 +27,6 @@ public class DockerService {
         this.image = image;
         this.network = network;
         this.envs = new ArrayList<>();
-        this.ports = new HashMap<>();
         this.labels = new HashMap<>();
     }
 
@@ -79,22 +77,8 @@ public class DockerService {
         return this;
     }
 
-    public DockerService addPort(int local, int container) {
-        this.ports.put(local, container);
-        return this;
-    }
-
-    public DockerService removePort(int local, int container) {
-        this.ports.remove(local, container);
-        return this;
-    }
-
     public Map<String, String> getLabels() {
         return this.labels;
-    }
-
-    public Map<Integer, Integer> getPorts() {
-        return this.ports;
     }
 
     public DockerService withHostname(String hostname) {
@@ -106,9 +90,17 @@ public class DockerService {
         return hostname;
     }
 
+    public int getPublishedPort() {
+        return this.publishedPort;
+    }
+
     public DockerService withPublishedPort(int publishedPort) {
         this.publishedPort = publishedPort;
         return this;
+    }
+
+    public int getTargetPort() {
+        return this.targetPort;
     }
 
     public DockerService withTargetPort(int targetPort) {

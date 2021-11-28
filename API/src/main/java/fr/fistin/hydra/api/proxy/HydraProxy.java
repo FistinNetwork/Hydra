@@ -15,6 +15,9 @@ public class HydraProxy {
     /** Proxy started time */
     protected final long startedTime;
 
+    /** Proxy port */
+    protected int port;
+
     /** Proxy state */
     protected HydraProxyState state;
 
@@ -30,6 +33,14 @@ public class HydraProxy {
         this.uuid = UUID.randomUUID();
         this.startedTime = startedTime;
         this.state = HydraProxyState.CREATING;
+    }
+
+    /**
+     * Constructor of {@link HydraProxy}
+     *
+     */
+    public HydraProxy() {
+        this(System.currentTimeMillis());
     }
 
     /**
@@ -57,6 +68,25 @@ public class HydraProxy {
      */
     public long getStartedTime() {
         return this.startedTime;
+    }
+
+    /**
+     * Get proxy's open port
+     *
+     * @return Proxy's port
+     */
+    public int getPort() {
+        return this.port;
+    }
+
+    /**
+     * Set proxy's open port<br>
+     * WARNING: If the proxy is already running, it will have no impact on the proxy
+     *
+     * @param port New proxy's port
+     */
+    public void setPort(int port) {
+        this.port = port;
     }
 
     /**

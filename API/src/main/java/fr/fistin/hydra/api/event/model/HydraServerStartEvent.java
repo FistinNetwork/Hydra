@@ -9,25 +9,25 @@ import fr.fistin.hydra.api.event.HydraEvent;
  */
 public class HydraServerStartEvent extends HydraEvent {
 
-    /** If of the server */
-    private final String serverId;
+    /** Name of the server */
+    private final String serverName;
 
     /**
      * Constructor of {@link HydraServerStartEvent}
      *
-     * @param serverId Server's id
+     * @param serverName Server's name
      */
-    public HydraServerStartEvent(String serverId) {
-        this.serverId = serverId;
+    public HydraServerStartEvent(String serverName) {
+        this.serverName = serverName;
     }
 
     /**
-     * Get server's id
+     * Get server's name
      *
-     * @return An id
+     * @return A name
      */
     public String getServerId() {
-        return this.serverId;
+        return this.serverName;
     }
 
 }

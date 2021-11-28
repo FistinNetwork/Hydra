@@ -1,6 +1,7 @@
 package fr.fistin.hydra.api.protocol.packet.model;
 
-import fr.fistin.hydra.api.protocol.HydraResponse;
+import fr.fistin.hydra.api.protocol.response.HydraResponse;
+import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 
 import java.util.UUID;
@@ -16,7 +17,7 @@ public class HydraResponsePacket extends HydraPacket {
     private final UUID respondedPacketUniqueId;
 
     /** Response's type */
-    private final HydraResponse response;
+    private final HydraResponseType response;
 
     /** Response's message */
     private final String message;
@@ -28,7 +29,7 @@ public class HydraResponsePacket extends HydraPacket {
      * @param response Response's type
      * @param message Response's message
      */
-    public HydraResponsePacket(UUID respondedPacketUniqueId, HydraResponse response, String message) {
+    public HydraResponsePacket(UUID respondedPacketUniqueId, HydraResponseType response, String message) {
         this.respondedPacketUniqueId = respondedPacketUniqueId;
         this.response = response;
         this.message = message;
@@ -46,9 +47,9 @@ public class HydraResponsePacket extends HydraPacket {
     /**
      * Get response's type
      *
-     * @return {@link HydraResponse} object
+     * @return {@link HydraResponseType} object
      */
-    public HydraResponse getResponse() {
+    public HydraResponseType getResponse() {
         return this.response;
     }
 

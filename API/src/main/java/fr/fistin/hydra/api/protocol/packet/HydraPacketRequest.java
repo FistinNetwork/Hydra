@@ -2,10 +2,10 @@ package fr.fistin.hydra.api.protocol.packet;
 
 import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.HydraConnection;
-import fr.fistin.hydra.api.protocol.HydraResponse;
-import fr.fistin.hydra.api.protocol.HydraResponseCallback;
 import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
-import fr.fistin.hydra.api.util.Pair;
+import fr.fistin.hydra.api.protocol.response.HydraResponse;
+import fr.fistin.hydra.api.protocol.response.HydraResponseCallback;
+import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 
 /**
  * Project: Hydra
@@ -96,7 +96,7 @@ public class HydraPacketRequest {
                     this.responseCallback.call(responsePacket.getResponse(), responsePacket.getMessage());
                 }
             }
-            return new Pair<>(HydraResponse.NONE, "");
+            return new HydraResponse(HydraResponseType.NONE);
         });
     }
 

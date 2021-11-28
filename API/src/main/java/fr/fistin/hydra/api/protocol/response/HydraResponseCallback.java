@@ -1,4 +1,4 @@
-package fr.fistin.hydra.api.protocol;
+package fr.fistin.hydra.api.protocol.response;
 
 /**
  * Project: Hydra
@@ -13,6 +13,6 @@ public interface HydraResponseCallback {
      * @param response Response's type
      * @param message Response's message
      */
-    void call(HydraResponse response, String message);
+    void call(HydraResponseType response, String message);
 
 }

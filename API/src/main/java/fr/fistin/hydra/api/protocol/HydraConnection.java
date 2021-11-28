@@ -5,7 +5,8 @@ import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 import fr.fistin.hydra.api.protocol.packet.HydraPacketRequest;
 import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
 import fr.fistin.hydra.api.protocol.receiver.IHydraPacketReceiver;
-import fr.fistin.hydra.api.util.Pair;
+import fr.fistin.hydra.api.protocol.response.HydraResponse;
+import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 
 /**
  * Project: Hydra
@@ -37,16 +38,21 @@ public class HydraConnection {
             final HydraPacket packet = this.decode(message);
 
             if (packet != null) {
-                final Pair<HydraResponse, String> pair = receiver.receive(channel, packet);
-                final HydraResponse response = pair.getFirst();
+                final HydraResponse response = receiver.receive(channel, packet);
 
-                if (response != HydraResponse.NONE) {
-                    final HydraResponsePacket responsePacket = new HydraResponsePacket(packet.getUniqueId(), response, pair.getSecond());
+                if (response != null) {
+                    final HydraResponseType type = response.getType();
 
-                    this.sendPacket(channel, responsePacket).exec();
+                    if (type != HydraResponseType.NONE) {
+                        final HydraResponsePacket responsePacket = new HydraResponsePacket(packet.getUniqueId(), type, response.getMessage());
+
+                        this.sendPacket(channel, responsePacket).exec();
+                    }
                 }
             }
         });
+
+        HydraAPI.log("Subscribed '" + receiver.getClass().getName() + "' receiver on '" + channel + "' channel.");
     }
 
     /**

@@ -7,31 +7,33 @@ import com.github.dockerjava.api.model.SwarmInfo;
 import com.github.dockerjava.api.model.SwarmNode;
 import fr.fistin.hydra.docker.Docker;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class DockerSwarmManager {
+public class DockerSwarm {
 
-    private final Set<DockerService> services;
+    private final Map<String, DockerService> services;
 
     private final DockerClient dockerClient;
 
-    public DockerSwarmManager(Docker docker) {
+    public DockerSwarm(Docker docker) {
         this.dockerClient = docker.getDockerClient();
-        this.services = new HashSet<>();
+        this.services = new HashMap<>();
     }
 
     public void runService(DockerService service) {
         this.dockerClient.createServiceCmd(service.toSwarmService()).exec();
 
-        this.services.add(service);
+        this.services.put(service.getName(), service);
     }
 
-    public void removeService(DockerService service) {
-        this.dockerClient.removeServiceCmd(service.getName()).exec();
+    public void removeService(String name) {
+        this.dockerClient.removeServiceCmd(name).exec();
 
-        this.services.remove(service);
+        this.services.remove(name);
+    }
+
+    public void inspectService(DockerService service) {
+        this.dockerClient.inspectServiceCmd(service.getName()).exec();
     }
 
     public List<Service> listServices() {
@@ -39,7 +41,7 @@ public class DockerSwarmManager {
     }
 
     public Set<DockerService> getServices() {
-        return this.services;
+        return new HashSet<>(this.services.values());
     }
 
     public Swarm getSwarm() {

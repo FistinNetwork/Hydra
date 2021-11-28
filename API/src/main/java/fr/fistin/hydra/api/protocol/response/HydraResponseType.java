@@ -1,11 +1,11 @@
-package fr.fistin.hydra.api.protocol;
+package fr.fistin.hydra.api.protocol.response;
 
 /**
  * Project: Hydra
  * Created by AstFaster
  * on 24/11/2021 at 13:19
  */
-public enum HydraResponse {
+public enum HydraResponseType {
 
     /** No response to send back */
     NONE,
@@ -17,6 +17,15 @@ public enum HydraResponse {
     NOT_OK,
 
     /** The request has been taken but need to be cancelled */
-    ABORT
+    ABORT;
+
+    /**
+     * Create a response from a type
+     *
+     * @return {@link HydraResponse} object
+     */
+    public HydraResponse toResponse() {
+        return new HydraResponse(this);
+    }
 
 }

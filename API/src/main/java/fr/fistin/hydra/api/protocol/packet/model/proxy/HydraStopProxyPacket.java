@@ -9,25 +9,25 @@ import fr.fistin.hydra.api.protocol.packet.HydraPacket;
  */
 public class HydraStopProxyPacket extends HydraPacket {
 
-    /** Identifier of the proxy to stop */
-    private final String proxyId;
+    /** Name  of the proxy to stop */
+    private final String proxyName;
 
     /**
      * Constructor of {@link HydraStopProxyPacket}
      *
-     * @param proxyId Proxy's id
+     * @param proxyName Proxy's name
      */
-    public HydraStopProxyPacket(String proxyId) {
-        this.proxyId = proxyId;
+    public HydraStopProxyPacket(String proxyName) {
+        this.proxyName = proxyName;
     }
 
     /**
-     * Get proxy's id
+     * Get proxy's name
      *
-     * @return An id
+     * @return A name
      */
-    public String getProxyId() {
-        return this.proxyId;
+    public String getProxyName() {
+        return this.proxyName;
     }
 
 }

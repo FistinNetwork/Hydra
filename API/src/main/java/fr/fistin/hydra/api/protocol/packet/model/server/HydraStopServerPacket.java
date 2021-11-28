@@ -9,25 +9,25 @@ import fr.fistin.hydra.api.protocol.packet.HydraPacket;
  */
 public class HydraStopServerPacket extends HydraPacket {
 
-    /** Identifier of the server to stop */
-    private final String serverId;
+    /** Name of the server to stop */
+    private final String serverName;
 
     /**
      * Constructor of {@link HydraStopServerPacket}
      *
-     * @param serverId Server's id
+     * @param serverName Server's name
      */
-    public HydraStopServerPacket(String serverId) {
-        this.serverId = serverId;
+    public HydraStopServerPacket(String serverName) {
+        this.serverName = serverName;
     }
 
     /**
-     * Get server's id
+     * Get server's name
      *
-     * @return An id
+     * @return A name
      */
-    public String getServerId() {
-        return this.serverId;
+    public String getServerName() {
+        return this.serverName;
     }
 
 }

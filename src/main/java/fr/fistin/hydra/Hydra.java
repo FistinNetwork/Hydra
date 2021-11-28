@@ -1,8 +1,11 @@
 package fr.fistin.hydra;
 
 import fr.fistin.hydra.api.HydraAPI;
+import fr.fistin.hydra.api.protocol.HydraChannel;
+import fr.fistin.hydra.api.protocol.HydraConnection;
 import fr.fistin.hydra.docker.Docker;
 import fr.fistin.hydra.proxy.HydraProxyManager;
+import fr.fistin.hydra.receiver.HydraQueryReceiver;
 import fr.fistin.hydra.redis.HydraRedisConnection;
 import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.util.References;
@@ -23,8 +26,8 @@ public class Hydra {
 
     /** Hydra */
     private HydraAPI api;
-    private final HydraProxyManager proxyManager;
-    private final HydraServerManager serverManager;
+    private HydraProxyManager proxyManager;
+    private HydraServerManager serverManager;
 
     /** State */
     private boolean running = false;
@@ -34,11 +37,6 @@ public class Hydra {
 
     /** Redis */
     private HydraRedisConnection redisConnection;
-
-    public Hydra() {
-        this.proxyManager = new HydraProxyManager(this);
-        this.serverManager = new HydraServerManager(this);
-    }
 
     public void start() {
         HydraLogger.printHeaderMessage();
@@ -56,25 +54,31 @@ public class Hydra {
         }
 
         this.api = new HydraAPI(new HydraProvider(this));
+        this.proxyManager = new HydraProxyManager(this);
+        this.serverManager = new HydraServerManager(this);
 
-        this.serverManager.startServer();
+        this.registerReceivers();
+
+        this.proxyManager.startProxy();
 
         this.running = true;
+
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     public void shutdown() {
-        System.out.println("Stopping " + References.NAME + "...");
+        if (this.running) {
+            System.out.println("Stopping " + References.NAME + "...");
 
-        this.running = false;
+            this.running = false;
 
-        if (this.redisConnection != null && this.redisConnection.isConnected()) {
-            this.api.stop();
-            this.redisConnection.disconnect();
+            if (this.redisConnection != null && this.redisConnection.isConnected()) {
+                this.api.stop();
+                this.redisConnection.disconnect();
+            }
+
+            System.out.println("Hydra is now down. See you soon!");
         }
-
-        this.logger.log(Level.INFO, "Hydra is now down. See you soon!");
-
-        System.exit(0);
     }
 
     private void setupConsoleReader() {
@@ -99,6 +103,12 @@ public class Hydra {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void registerReceivers() {
+        final HydraConnection connection = this.api.getConnection();
+
+        connection.registerReceiver(HydraChannel.QUERY, new HydraQueryReceiver(this));
     }
 
     public ConsoleReader getConsoleReader() {

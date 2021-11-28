@@ -9,25 +9,25 @@ import fr.fistin.hydra.api.event.HydraEvent;
  */
 public class HydraProxyStopEvent extends HydraEvent {
 
-    /** If of the proxy */
-    private final String proxyId;
+    /** Name of the proxy */
+    private final String proxyName;
 
     /**
      * Constructor of {@link HydraProxyStopEvent}
      *
-     * @param proxyId Proxy's id
+     * @param proxyName Proxy's name
      */
-    public HydraProxyStopEvent(String proxyId) {
-        this.proxyId = proxyId;
+    public HydraProxyStopEvent(String proxyName) {
+        this.proxyName = proxyName;
     }
 
     /**
-     * Get proxy's id
+     * Get proxy's name
      *
-     * @return An id
+     * @return A name
      */
-    public String getProxyId() {
-        return this.proxyId;
+    public String getProxyName() {
+        return this.proxyName;
     }
 
 }
