@@ -48,7 +48,7 @@ public class HydraProxyManager {
             final HydraStopProxyPacket packet = new HydraStopProxyPacket(name);
             final HydraResponseCallback responseCallback = (response, message) -> {
                 if (response != HydraResponseType.OK) {
-                    System.err.println(proxy.getName() + " don't want to stop! Response: " + response + ". Reason: " + message + ". Forcing it to stop!");
+                    System.err.println(proxy.getName() + " doesn't want to stop! Response: " + response + ". Reason: " + message + ". Forcing it to stop!");
                 }
 
                 this.swarm.removeService(name);

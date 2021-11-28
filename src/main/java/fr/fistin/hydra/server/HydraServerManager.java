@@ -50,7 +50,7 @@ public class HydraServerManager {
             final HydraStopServerPacket packet = new HydraStopServerPacket(name);
             final HydraResponseCallback responseCallback = (response, message) -> {
                 if (response != HydraResponseType.OK) {
-                    System.err.println("'" + server.getName() + "' server don't want to stop! Response: " + response + ". Reason: " + message + ". Forcing it to stop!");
+                    System.err.println("'" + server.getName() + "' server doesn't want to stop! Response: " + response + ". Reason: " + message + ". Forcing it to stop!");
                 }
 
                 this.swarm.removeService(name);
