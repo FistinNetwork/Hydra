@@ -15,7 +15,7 @@ import fr.fistin.hydra.util.References;
  */
 public class HydraProxyService extends DockerService {
 
-    public static final DockerImage PROXY_IMAGE = new DockerImage("itzg/bungeecord", "latest");
+    private static final DockerImage PROXY_IMAGE = new DockerImage("itzg/bungeecord", "java11");
 
     private static final int MIN_PORT = 45565;
     private static final int MAX_PORT = 65535;
@@ -27,9 +27,10 @@ public class HydraProxyService extends DockerService {
         this.targetPort = 25577;
         this.publishedPort = PortUtil.nextAvailablePort(MIN_PORT, MAX_PORT);
 
-        this.addLabel("com.docker.stack.namespace", References.STACK_NAME);
-        this.addEnv("TYPE", "BUNGEECORD");
+        this.addLabel(References.STACK_NAMESPACE_LABEL, References.STACK_NAME);
+        this.addEnv("TYPE", "WATERFALL");
         this.addEnv("ENABLE_RCON", "FALSE");
+        this.addEnv("PLUGINS", "");
 
         proxy.setPort(this.publishedPort);
     }

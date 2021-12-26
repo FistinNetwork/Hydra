@@ -11,7 +11,7 @@ import java.util.logging.Level;
  * Created by AstFaster
  * on 20/11/2021 at 09:48
  */
-class HydraPubSubPublisher implements Runnable {
+class HydraPubSubSender implements Runnable {
 
     private boolean running = true;
 
@@ -21,7 +21,7 @@ class HydraPubSubPublisher implements Runnable {
 
     private final HydraAPI hydraAPI;
 
-    public HydraPubSubPublisher(HydraAPI hydraAPI) {
+    public HydraPubSubSender(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
         this.messages = new LinkedBlockingQueue<>();
     }

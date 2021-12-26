@@ -7,6 +7,8 @@ import fr.fistin.hydra.api.protocol.HydraConnection;
 import fr.fistin.hydra.api.redis.HydraPubSub;
 import redis.clients.jedis.Jedis;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,16 +26,14 @@ public class HydraAPI {
 
     /** {@link IHydraProvider} instance */
     private final IHydraProvider provider;
-
+    /** An executor service that can schedule tasks */
+    private final ScheduledExecutorService executorService;
     /** Redis PubSub instance */
     private final HydraPubSub pubSub;
-
     /** Hydra connection. Used to send and receive packets */
     private final HydraConnection connection;
-
     /** Hydra event bus */
     private final HydraEventBus eventBus;
-
     /** A logger used to print info */
     private static Logger logger;
 
@@ -45,21 +45,31 @@ public class HydraAPI {
     public HydraAPI(IHydraProvider provider) {
         logger = provider.getLogger();
 
-        log("Starting " + NAME + "...");
-
         this.provider = provider;
+        this.executorService = Executors.newScheduledThreadPool(32);
         this.pubSub = new HydraPubSub(this);
         this.connection = new HydraConnection(this);
         this.eventBus = new HydraEventBus(this);
     }
 
     /**
+     * Start {@link HydraAPI}
+     */
+    public void start() {
+        log("Starting " + NAME + "...");
+
+        this.pubSub.start();
+        this.eventBus.start();
+    }
+
+    /**
      * To call when you want to stop {@link HydraAPI}
      */
-    public void stop() {
-        log("Stopping " + NAME + "...");
+    public void stop(String reason) {
+        log("Stopping " + NAME + " (reason: " + reason + ")...");
 
         this.pubSub.stop();
+        this.executorService.shutdown();
     }
 
     /**
@@ -88,6 +98,15 @@ public class HydraAPI {
      */
     public IHydraProvider getProvider() {
         return this.provider;
+    }
+
+    /**
+     * Get the executor service that can schedule tasks
+     *
+     * @return {@link ScheduledExecutorService} instance
+     */
+    public ScheduledExecutorService getExecutorService() {
+        return this.executorService;
     }
 
     /**

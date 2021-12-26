@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Project: Hydra
@@ -25,19 +26,43 @@ class HydraPubSubSubscriber extends JedisPubSub {
     }
 
     public void registerReceiver(String channel, IHydraChannelReceiver receiver) {
-        final Set<IHydraChannelReceiver> receivers = this.channelsReceivers.get(channel) != null ? this.channelsReceivers.get(channel) : new HashSet<>();
+        final Set<IHydraChannelReceiver> receivers = this.channelsReceivers.get(channel) != null ? this.channelsReceivers.get(channel) : ConcurrentHashMap.newKeySet();
 
         receivers.add(receiver);
 
         this.channelsReceivers.put(channel, receivers);
     }
 
+    public void unregisterReceiver(String channel, IHydraChannelReceiver receiver) {
+        try {
+            final Set<IHydraChannelReceiver> receivers = this.channelsReceivers.get(channel);
+
+            if (receivers != null && receivers.contains(receiver)) {
+                receivers.remove(receiver);
+
+                this.channelsReceivers.put(channel, receivers);
+            }
+        } catch (Exception ignored) {}
+    }
+
     public void registerReceiver(String pattern, IHydraPatternReceiver receiver) {
-        final Set<IHydraPatternReceiver> receivers = this.patternsReceivers.get(pattern) != null ? this.patternsReceivers.get(pattern) : new HashSet<>();
+        final Set<IHydraPatternReceiver> receivers = this.patternsReceivers.get(pattern) != null ? this.patternsReceivers.get(pattern) : ConcurrentHashMap.newKeySet();
 
         receivers.add(receiver);
 
         this.patternsReceivers.put(pattern, receivers);
+    }
+
+    public void unregisterReceiver(String channel, IHydraPatternReceiver receiver) {
+        try {
+            final Set<IHydraPatternReceiver> receivers = this.patternsReceivers.get(channel);
+
+            if (receivers != null && receivers.contains(receiver)) {
+                receivers.remove(receiver);
+
+                this.patternsReceivers.put(channel, receivers);
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override

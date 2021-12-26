@@ -24,7 +24,7 @@ public class HydraLoggingOutputStream extends ByteArrayOutputStream {
         super.reset();
 
         if (!contents.isEmpty() && !contents.equals(System.getProperty("line.separator"))) {
-            this.logger.logp(level, "", "", contents.replace("\n", ""));
+            this.logger.logp(level, "", "", contents.substring(0, contents.length() - 1));
         }
     }
 

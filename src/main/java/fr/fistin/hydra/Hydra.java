@@ -54,6 +54,7 @@ public class Hydra {
         }
 
         this.api = new HydraAPI(new HydraProvider(this));
+        this.api.start();
         this.proxyManager = new HydraProxyManager(this);
         this.serverManager = new HydraServerManager(this);
 
@@ -73,7 +74,7 @@ public class Hydra {
             this.running = false;
 
             if (this.redisConnection != null && this.redisConnection.isConnected()) {
-                this.api.stop();
+                this.api.stop("Stopping " + References.NAME + " application");
                 this.redisConnection.disconnect();
             }
 

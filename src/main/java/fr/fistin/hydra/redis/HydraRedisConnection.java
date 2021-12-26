@@ -81,7 +81,7 @@ public class HydraRedisConnection {
         try {
             this.getJedis().close();
         } catch (Exception e) {
-            System.err.println("Encountered exception in Redis reconnection task. Error:" + e.getMessage());
+            System.err.println("Encountered exception in Redis reconnection task. Error: " + e.getMessage());
             System.err.println("Error in Redis database connection ! Trying to reconnect...");
 
             this.connected = false;

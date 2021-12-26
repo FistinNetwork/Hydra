@@ -1,7 +1,22 @@
+plugins {
+    id "com.github.johnrengelman.shadow"
+}
+
 apply plugin: 'maven-publish'
 
 version = '1.0.0'
 archivesBaseName = 'Hydra-API'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+compileJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    options.encoding = 'UTF-8'
+}
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     classifier 'sources'
@@ -19,6 +34,10 @@ tasks.withType(Javadoc) {
 
 artifacts {
     archives sourcesJar, javadocJar
+}
+
+shadowJar {
+    configurations = [project.configurations.runtimeClasspath]
 }
 
 publishing {
@@ -45,7 +64,7 @@ publishing {
                 username System.getenv('USERNAME')
                 password System.getenv('TOKEN')
             }
-            name = "Hyrame_maven"
+            name = "Hydra_maven"
             url = "https://maven.pkg.github.com/FistinNetwork/Hydra"
         }
     }

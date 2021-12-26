@@ -5,6 +5,8 @@ import fr.fistin.hydra.api.redis.receiver.IHydraChannelReceiver;
 import fr.fistin.hydra.api.redis.receiver.IHydraPatternReceiver;
 import redis.clients.jedis.Jedis;
 
+import java.util.logging.Level;
+
 /**
  * Project: Hydra
  * Created by AstFaster
@@ -20,7 +22,7 @@ public class HydraPubSub {
     private boolean running;
 
     /** PubSub publisher used to send message */
-    private final HydraPubSubPublisher publisher;
+    private final HydraPubSubSender publisher;
 
     /** PubSub subscriber to subscribe on a channel */
     private final HydraPubSubSubscriber subscriber;
@@ -35,19 +37,17 @@ public class HydraPubSub {
      */
     public HydraPubSub(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
-        this.publisher = new HydraPubSubPublisher(hydraAPI);
+        this.publisher = new HydraPubSubSender(hydraAPI);
         this.subscriber = new HydraPubSubSubscriber();
-
-        this.start();
     }
 
     /**
      * Start PubSub
      */
-    private void start() {
+    public void start() {
         this.running = true;
 
-        this.senderThread = new Thread(publisher, "PubSubPublisherThread");
+        this.senderThread = new Thread(publisher, "PubSub Sender");
         this.senderThread.start();
 
         this.subscriberThread = new Thread(() -> {
@@ -71,7 +71,7 @@ public class HydraPubSub {
                         jedis.close();
                     }
                 } catch (Exception e) {
-                    HydraAPI.log("An error occurred in Redis connection! Waiting to be fixed.");
+                    HydraAPI.log(Level.SEVERE, "An error occurred in Redis connection! Waiting to be fixed.");
                 }
             }
         });
@@ -108,6 +108,20 @@ public class HydraPubSub {
     }
 
     /**
+     * Unsubscribe a receiver from a given channel
+     *
+     * @param channel Receiver's channel
+     * @param receiver Receiver to unsubscribe
+     */
+    public void unsubscribe(String channel, IHydraChannelReceiver receiver) {
+        this.subscriber.unregisterReceiver(channel, receiver);
+
+        if (this.subscriber.isSubscribed()) {
+            this.subscriber.unsubscribe();
+        }
+    }
+
+    /**
      * Subscribe a receiver on a given pattern
      *
      * @param pattern Pattern
@@ -118,6 +132,20 @@ public class HydraPubSub {
 
         if (this.subscriber.isSubscribed()) {
             this.subscriber.punsubscribe();
+        }
+    }
+
+    /**
+     * Unsubscribe a receiver from a given channel
+     *
+     * @param channel Receiver's channel
+     * @param receiver Receiver to unsubscribe
+     */
+    public void unsubscribe(String channel, IHydraPatternReceiver receiver) {
+        this.subscriber.unregisterReceiver(channel, receiver);
+
+        if (this.subscriber.isSubscribed()) {
+            this.subscriber.unsubscribe();
         }
     }
 

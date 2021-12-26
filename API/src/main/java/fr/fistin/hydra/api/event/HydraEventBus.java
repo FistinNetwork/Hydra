@@ -32,6 +32,13 @@ public class HydraEventBus {
     public HydraEventBus(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
         this.contexts = new ArrayList<>();
+    }
+
+    /**
+     * Start the event bus by subscribing on events channel
+     */
+    public void start() {
+        HydraAPI.log("Starting event bus...");
 
         this.hydraAPI.getPubSub().subscribe(HydraChannel.EVENTS, (channel, message) -> {
             final HydraEvent event = this.decode(message);

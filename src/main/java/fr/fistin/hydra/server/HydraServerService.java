@@ -13,13 +13,13 @@ import fr.fistin.hydra.util.References;
  */
 public class HydraServerService extends DockerService {
 
-    public static final DockerImage SERVER_IMAGE = new DockerImage("itzg/minecraft-server", "java8");
+    private static final DockerImage SERVER_IMAGE = new DockerImage("itzg/minecraft-server", "java8");
 
     public HydraServerService(HydraServer server) {
         super(server.getName(), SERVER_IMAGE, DockerNetwork.FISTIN_NETWORK);
 
         this.hostname = server.getName();
-        this.labels.put("com.docker.stack.namespace", References.STACK_NAME);
+        this.labels.put(References.STACK_NAMESPACE_LABEL, References.STACK_NAME);
         this.envs = server.getOptions().getEnvs();
     }
 
