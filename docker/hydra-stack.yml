@@ -12,7 +12,7 @@ services:
     command: redis-server --requirepass p@ssw0rd
 
   hydra:
-    image: hydra:dev
+    image: hydra
     networks:
       - fistin
     environment:
@@ -22,3 +22,4 @@ services:
       REDIS_PASS: p@ssw0rd
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/:/usr/app/data

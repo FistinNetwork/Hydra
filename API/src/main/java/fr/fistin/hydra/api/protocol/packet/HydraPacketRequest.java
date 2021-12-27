@@ -173,7 +173,7 @@ public class HydraPacketRequest {
             connection.registerReceiver(this.channel, new HydraResponseReceiver(this.hydraAPI, this));
         }
 
-        this.hydraAPI.getPubSub().send(this.channel, connection.encode(packet), this.sendingCallback);
+        this.hydraAPI.getPubSub().send(this.channel, this.hydraAPI.getCodec().encode(packet), this.sendingCallback);
     }
 
 }

@@ -1,4 +1,4 @@
-package fr.fistin.hydra.api.protocol.codec;
+package fr.fistin.hydra.api.protocol.packet.codec;
 
 import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.HydraProtocol;
@@ -9,15 +9,16 @@ import java.util.Base64;
 /**
  * Project: Hydra
  * Created by AstFaster
- * on 23/11/2021 at 07:15
+ * on 27/12/2021 at 09:02
  */
-public class HydraPacketDecoder implements IHydraPacketDecoder {
+public class HydraCodec implements IHydraCodec {
 
     /**
-     * Deserialize packet from json and return it decoded in Base64
+     * Decode a given message to a packet object<br>
+     * This default decoder decode the message from base64
      *
      * @param message Message to decode
-     * @return Decoded packet
+     * @return Decoded {@link HydraPacket}
      */
     @Override
     public HydraPacket decode(String message) {
@@ -33,4 +34,17 @@ public class HydraPacketDecoder implements IHydraPacketDecoder {
         }
     }
 
+    /**
+     * Encode a given packet to a string<br>
+     * This default encoder encode the message to base64
+     *
+     * @param packet Packet to encode
+     * @return Encoded packet
+     */
+    @Override
+    public String encode(HydraPacket packet) {
+        final Base64.Encoder encoder = Base64.getEncoder();
+
+        return HydraProtocol.getPacketIdByClass(packet.getClass()) + HydraProtocol.SPLIT_CHAR + encoder.encodeToString(HydraAPI.GSON.toJson(packet).getBytes());
+    }
 }

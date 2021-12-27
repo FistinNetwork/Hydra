@@ -37,14 +37,16 @@ public class HydraPubSub {
      */
     public HydraPubSub(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
-        this.publisher = new HydraPubSubSender(hydraAPI);
-        this.subscriber = new HydraPubSubSubscriber();
+        this.publisher = new HydraPubSubSender(this.hydraAPI);
+        this.subscriber = new HydraPubSubSubscriber(this.hydraAPI);
     }
 
     /**
      * Start PubSub
      */
     public void start() {
+        HydraAPI.log("Starting PubSub...");
+
         this.running = true;
 
         this.senderThread = new Thread(publisher, "PubSub Sender");

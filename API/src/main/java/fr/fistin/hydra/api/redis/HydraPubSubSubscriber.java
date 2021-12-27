@@ -1,5 +1,6 @@
 package fr.fistin.hydra.api.redis;
 
+import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.redis.receiver.IHydraChannelReceiver;
 import fr.fistin.hydra.api.redis.receiver.IHydraPatternReceiver;
 import redis.clients.jedis.JedisPubSub;
@@ -20,7 +21,10 @@ class HydraPubSubSubscriber extends JedisPubSub {
     private final Map<String, Set<IHydraChannelReceiver>> channelsReceivers;
     private final Map<String, Set<IHydraPatternReceiver>> patternsReceivers;
 
-    public HydraPubSubSubscriber() {
+    private final HydraAPI hydraAPI;
+
+    public HydraPubSubSubscriber(HydraAPI hydraAPI) {
+        this.hydraAPI = hydraAPI;
         this.channelsReceivers = new HashMap<>();
         this.patternsReceivers = new HashMap<>();
     }
@@ -70,7 +74,12 @@ class HydraPubSubSubscriber extends JedisPubSub {
         final Set<IHydraChannelReceiver> receivers = this.channelsReceivers.get(channel);
 
         if (receivers != null) {
-            receivers.forEach(receiver -> receiver.receive(channel, message));
+            if (this.hydraAPI.getType() == HydraAPI.Type.CLIENT) {
+                System.out.println("Received " + message);
+                receivers.forEach(receiver -> receiver.receive(channel, this.hydraAPI.getJWTManager().fromJWT(message)));
+            } else {
+                receivers.forEach(receiver -> receiver.receive(channel, message));
+            }
         }
     }
 
@@ -79,7 +88,11 @@ class HydraPubSubSubscriber extends JedisPubSub {
         final Set<IHydraPatternReceiver> receivers = this.patternsReceivers.get(pattern);
 
         if (receivers != null) {
-            receivers.forEach(receiver -> receiver.receive(pattern, channel, message));
+            if (this.hydraAPI.getType() == HydraAPI.Type.CLIENT) {
+                receivers.forEach(receiver -> receiver.receive(pattern, channel, this.hydraAPI.getJWTManager().fromJWT(message)));
+            } else {
+                receivers.forEach(receiver -> receiver.receive(pattern, channel, message));
+            }
         }
     }
 

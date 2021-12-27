@@ -1,5 +1,6 @@
 package fr.fistin.hydra.proxy;
 
+import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.api.proxy.HydraProxy;
 import fr.fistin.hydra.api.server.HydraServer;
 import fr.fistin.hydra.docker.image.DockerImage;
@@ -7,6 +8,8 @@ import fr.fistin.hydra.docker.network.DockerNetwork;
 import fr.fistin.hydra.docker.swarm.DockerService;
 import fr.fistin.hydra.util.PortUtil;
 import fr.fistin.hydra.util.References;
+
+import java.util.Base64;
 
 /**
  * Project: Hydra
@@ -20,7 +23,7 @@ public class HydraProxyService extends DockerService {
     private static final int MIN_PORT = 45565;
     private static final int MAX_PORT = 65535;
 
-    public HydraProxyService(HydraProxy proxy) {
+    public HydraProxyService(Hydra hydra, HydraProxy proxy) {
         super(proxy.getName(), PROXY_IMAGE, DockerNetwork.FISTIN_NETWORK);
 
         this.hostname = proxy.getName();
@@ -30,7 +33,9 @@ public class HydraProxyService extends DockerService {
         this.addLabel(References.STACK_NAMESPACE_LABEL, References.STACK_NAME);
         this.addEnv("TYPE", "WATERFALL");
         this.addEnv("ENABLE_RCON", "FALSE");
-        this.addEnv("PLUGINS", "");
+        this.addEnv("PLUGINS", "https://hyriode.fr/HydraBungee-1.0.0-all.jar");
+
+        this.addEnv("PUBLIC_KEY", Base64.getEncoder().encodeToString(hydra.getPublicKey().getEncoded()));
 
         proxy.setPort(this.publishedPort);
     }

@@ -1,6 +1,7 @@
 package fr.fistin.hydra.api.redis;
 
 import fr.fistin.hydra.api.HydraAPI;
+import io.jsonwebtoken.Jwts;
 import redis.clients.jedis.Jedis;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -53,8 +54,12 @@ class HydraPubSubSender implements Runnable {
         while (!published) {
             try {
                 final Runnable callback = message.getCallback();
+                final String jwt = this.hydraAPI.getJWTManager().toJWT(message.getMessage());
 
-                this.jedis.publish(message.getChannel(), message.getMessage());
+
+                System.out.println("Sent " + jwt);
+
+                this.jedis.publish(message.getChannel(), jwt);
 
                 if (callback != null) {
                     callback.run();

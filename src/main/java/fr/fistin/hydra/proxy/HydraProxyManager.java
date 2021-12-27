@@ -30,7 +30,7 @@ public class HydraProxyManager {
 
     public void startProxy() {
         final HydraProxy proxy = new HydraProxy();
-        final HydraProxyService service = new HydraProxyService(proxy);
+        final HydraProxyService service = new HydraProxyService(this.hydra, proxy);
 
         this.swarm.runService(service);
 
@@ -38,7 +38,7 @@ public class HydraProxyManager {
 
         this.hydra.getAPI().getEventBus().publish(new HydraProxyStartEvent(proxy.getName()));
 
-        System.out.println("Starting " + proxy.getName() + " on port: " + proxy.getPort() + "...");
+        System.out.println("Started " + proxy.getName() + " (port: " + proxy.getPort() + ").");
     }
 
     public boolean stopProxy(String name) {

@@ -44,7 +44,7 @@ public class HydraConnection {
     public void registerReceiver(String channel, IHydraPacketReceiver packetReceiver) {
         if (!this.packetReceivers.containsKey(packetReceiver)) {
             final IHydraChannelReceiver receiver = (ch, message) -> {
-                final HydraPacket packet = this.decode(message);
+                final HydraPacket packet = this.hydraAPI.getCodec().decode(message);
 
                 if (packet != null) {
                     final HydraResponse response = packetReceiver.receive(channel, packet);
@@ -84,26 +84,6 @@ public class HydraConnection {
      */
     public HydraPacketRequest sendPacket(String channel, HydraPacket packet) {
         return new HydraPacketRequest(this.hydraAPI).withChannel(channel).withPacket(packet);
-    }
-
-    /**
-     * Encode a packet to a string
-     *
-     * @param packet Packet to encode
-     * @return Encoded packet
-     */
-    public String encode(HydraPacket packet) {
-        return this.hydraAPI.getProvider().getPacketEncoder().encode(packet);
-    }
-
-    /**
-     * Decode a message to a packet
-     *
-     * @param message Message to decode
-     * @return Decoded packet
-     */
-    public HydraPacket decode(String message) {
-        return this.hydraAPI.getProvider().getPacketDecoder().decode(message);
     }
 
 }

@@ -11,11 +11,19 @@ import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.HydraLogger;
 import fr.fistin.hydra.util.logger.HydraLoggingOutputStream;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import jline.console.ConsoleReader;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.*;
+import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.logging.Level;
 
 public class Hydra {
@@ -23,6 +31,10 @@ public class Hydra {
     /** Logger */
     private ConsoleReader consoleReader;
     private HydraLogger logger;
+
+    /** Security */
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
 
     /** Hydra */
     private HydraAPI api;
@@ -46,6 +58,8 @@ public class Hydra {
 
         System.out.println("Starting " + References.NAME + "...");
 
+        this.loadKeys();
+
         this.docker = new Docker();
         this.redisConnection = new HydraRedisConnection();
 
@@ -53,7 +67,12 @@ public class Hydra {
             System.exit(-1);
         }
 
-        this.api = new HydraAPI(new HydraProvider(this));
+        this.api = new HydraAPI.Builder(HydraAPI.Type.SERVER)
+                .withLogger(this.logger)
+                .withLogHeader("API")
+                .withPrivateKey(this.privateKey)
+                .withJedisPool(this.redisConnection.getJedisPool())
+                .build();
         this.api.start();
         this.proxyManager = new HydraProxyManager(this);
         this.serverManager = new HydraServerManager(this);
@@ -78,7 +97,7 @@ public class Hydra {
                 this.redisConnection.disconnect();
             }
 
-            System.out.println("Hydra is now down. See you soon!");
+            System.out.println(References.NAME + " is now down. See you soon!");
         }
     }
 
@@ -106,6 +125,39 @@ public class Hydra {
         }
     }
 
+    private void loadKeys() {
+        final SignatureAlgorithm algorithm = SignatureAlgorithm.RS256;
+
+        try {
+            final KeyFactory keyFactory = KeyFactory.getInstance(algorithm.getFamilyName());
+
+            this.privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(Files.readAllBytes(Paths.get("./data/private.key"))));
+
+            System.out.println("Private key read from file.");
+            System.out.println("Generating public key from private one...");
+
+            final RSAPrivateCrtKey rsaPrivateCrtKey = (RSAPrivateCrtKey) this.privateKey;
+            final RSAPublicKeySpec keySpec = new RSAPublicKeySpec(rsaPrivateCrtKey.getModulus(), rsaPrivateCrtKey.getPublicExponent());
+
+            this.publicKey = keyFactory.generatePublic(keySpec);
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+            System.out.println("Generating key pair...");
+
+            final KeyPair keyPair = Keys.keyPairFor(algorithm);
+
+            privateKey = keyPair.getPrivate();
+            publicKey = keyPair.getPublic();
+
+            try {
+                System.out.println("Writing private key in file...");
+
+                Files.write(Paths.get("./data/private.key"), this.privateKey.getEncoded());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
     private void registerReceivers() {
         final HydraConnection connection = this.api.getConnection();
 
@@ -116,12 +168,16 @@ public class Hydra {
         return this.consoleReader;
     }
 
-    public HydraAPI getAPI() {
-        return this.api;
-    }
-
     public HydraLogger getLogger() {
         return this.logger;
+    }
+
+    public PublicKey getPublicKey() {
+        return this.publicKey;
+    }
+
+    public HydraAPI getAPI() {
+        return this.api;
     }
 
     public HydraProxyManager getProxyManager() {
@@ -132,12 +188,12 @@ public class Hydra {
         return this.serverManager;
     }
 
-    public HydraRedisConnection getRedisConnection() {
-        return this.redisConnection;
-    }
-
     public Docker getDocker() {
         return this.docker;
+    }
+
+    public HydraRedisConnection getRedisConnection() {
+        return this.redisConnection;
     }
 
     public boolean isRunning() {
