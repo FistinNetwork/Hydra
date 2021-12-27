@@ -75,8 +75,7 @@ class HydraPubSubSubscriber extends JedisPubSub {
 
         if (receivers != null) {
             if (this.hydraAPI.getType() == HydraAPI.Type.CLIENT) {
-                System.out.println("Received " + message);
-                receivers.forEach(receiver -> receiver.receive(channel, this.hydraAPI.getJWTManager().fromJWT(message)));
+                receivers.forEach(receiver -> receiver.receive(channel, message));
             } else {
                 receivers.forEach(receiver -> receiver.receive(channel, message));
             }
@@ -89,18 +88,18 @@ class HydraPubSubSubscriber extends JedisPubSub {
 
         if (receivers != null) {
             if (this.hydraAPI.getType() == HydraAPI.Type.CLIENT) {
-                receivers.forEach(receiver -> receiver.receive(pattern, channel, this.hydraAPI.getJWTManager().fromJWT(message)));
+                receivers.forEach(receiver -> receiver.receive(pattern, channel, message));
             } else {
                 receivers.forEach(receiver -> receiver.receive(pattern, channel, message));
             }
         }
     }
 
-    public Set<String> getChannelsSubscribed() {
+    Set<String> getChannelsSubscribed() {
         return this.channelsReceivers.keySet();
     }
 
-    public Set<String> getPatternsSubscribed() {
+    Set<String> getPatternsSubscribed() {
         return this.patternsReceivers.keySet();
     }
 

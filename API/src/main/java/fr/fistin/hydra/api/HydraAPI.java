@@ -3,7 +3,7 @@ package fr.fistin.hydra.api;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import fr.fistin.hydra.api.event.HydraEventBus;
-import fr.fistin.hydra.api.jwt.HydraJWTManager;
+import fr.fistin.hydra.api.jwt.HydraJWTS;
 import fr.fistin.hydra.api.protocol.HydraConnection;
 import fr.fistin.hydra.api.protocol.packet.codec.HydraCodec;
 import fr.fistin.hydra.api.protocol.packet.codec.IHydraCodec;
@@ -41,7 +41,7 @@ public class HydraAPI {
     /** The public key used to verify requests */
     private final PublicKey publicKey;
     /** The Hydra JWT manager */
-    private final HydraJWTManager jwtManager;
+    private final HydraJWTS jwts;
     /** An executor service that can schedule tasks */
     private final ScheduledExecutorService executorService;
     /** Redis PubSub instance */
@@ -70,10 +70,10 @@ public class HydraAPI {
         HydraAPI.logger = logger;
         HydraAPI.logHeader = logHeader;
         this.jedisPool = jedisPool;
-        this.codec = codec;
+        this.codec = codec == null ? new HydraCodec(this) : codec;
         this.privateKey = privateKey;
         this.publicKey = publicKey;
-        this.jwtManager = new HydraJWTManager(this);
+        this.jwts = new HydraJWTS(this);
         this.executorService = Executors.newScheduledThreadPool(32);
         this.pubSub = new HydraPubSub(this);
         this.connection = new HydraConnection(this);
@@ -167,10 +167,10 @@ public class HydraAPI {
     /**
      * Get the JWTs manager instance
      *
-     * @return {@link HydraJWTManager} instance
+     * @return {@link HydraJWTS} instance
      */
-    public HydraJWTManager getJWTManager() {
-        return this.jwtManager;
+    public HydraJWTS getJWTs() {
+        return this.jwts;
     }
 
     /**
@@ -223,7 +223,7 @@ public class HydraAPI {
         /** The {@link JedisPool} instance */
         private JedisPool jedisPool;
         /** The codec used to encode and decode packets */
-        private IHydraCodec codec = new HydraCodec();
+        private IHydraCodec codec;
         /** The private key used to authenticate sends (only if the application is {@link Type#SERVER} */
         private PrivateKey privateKey;
         /** The public key used to verify the authenticity of messages received (only if the application is {@link Type#CLIENT} */
@@ -322,7 +322,7 @@ public class HydraAPI {
          * @return {@link HydraAPI} instance
          */
         public HydraAPI build() {
-            if (this.type != null && this.logger != null && this.jedisPool != null && this.codec != null) {
+            if (this.type != null && this.logger != null && this.jedisPool != null) {
                 if (this.type == Type.CLIENT && this.publicKey == null) {
                     throw new RuntimeException("If you are running on a client, public key cannot be null!");
                 } else if (this.type == Type.SERVER && this.privateKey == null) {

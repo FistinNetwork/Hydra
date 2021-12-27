@@ -27,7 +27,7 @@ class HydraPubSubSender implements Runnable {
         this.messages = new LinkedBlockingQueue<>();
     }
 
-    public void publish(HydraPubSubMessage message) {
+    public void send(HydraPubSubMessage message) {
         this.messages.add(message);
     }
 
@@ -54,12 +54,8 @@ class HydraPubSubSender implements Runnable {
         while (!published) {
             try {
                 final Runnable callback = message.getCallback();
-                final String jwt = this.hydraAPI.getJWTManager().toJWT(message.getMessage());
 
-
-                System.out.println("Sent " + jwt);
-
-                this.jedis.publish(message.getChannel(), jwt);
+                this.jedis.publish(message.getChannel(), message.getMessage());
 
                 if (callback != null) {
                     callback.run();

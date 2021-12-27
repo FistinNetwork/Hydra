@@ -159,7 +159,7 @@ public class HydraPubSub {
      * @param callback Callback to fire after sending message
      */
     public void send(String channel, String message, Runnable callback) {
-        this.publisher.publish(new HydraPubSubMessage(channel, message, callback));
+        this.publisher.send(new HydraPubSubMessage(channel, message, callback));
     }
 
     /**
