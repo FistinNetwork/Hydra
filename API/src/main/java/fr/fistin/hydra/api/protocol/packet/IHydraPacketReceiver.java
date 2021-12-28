@@ -1,6 +1,5 @@
-package fr.fistin.hydra.api.protocol.receiver;
+package fr.fistin.hydra.api.protocol.packet;
 
-import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponse;
 
 /**

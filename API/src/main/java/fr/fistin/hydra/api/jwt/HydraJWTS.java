@@ -16,14 +16,28 @@ import java.util.logging.Level;
  */
 public class HydraJWTS {
 
+    /** Claim name of the content */
     private static final String CONTENT_CLAIM = "content";
 
+    /** {@link HydraAPI} instance */
     private final HydraAPI hydraAPI;
 
+    /**
+     * Constructor of {@link HydraJWTS}
+     *
+     * @param hydraAPI {@link HydraAPI} instance
+     */
     public HydraJWTS(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
     }
 
+    /**
+     * Transform a content to a jws<br>
+     * Warning: this will work only if you provided a private key to the api
+     *
+     * @param content The content to transform
+     * @return The jws
+     */
     public String contentToJWS(String content) {
         final PrivateKey privateKey = this.hydraAPI.getPrivateKey();
         final Map<String, Object> claims = new HashMap<>();
@@ -36,6 +50,12 @@ public class HydraJWTS {
                 .compact();
     }
 
+    /**
+     * Transform a jws to its content
+     *
+     * @param jws The jws to transform
+     * @return The content of the jws
+     */
     public String jwsToContent(String jws) {
         try {
             return Jwts.parserBuilder()

@@ -24,6 +24,7 @@ import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public class Hydra {
@@ -83,6 +84,14 @@ public class Hydra {
 
         this.running = true;
 
+        this.api.getExecutorService().schedule(() -> {
+            final String[] types = new String[]{"lobby", "rtf", "tnttag", "wr"};
+
+            for (String type : types) {
+                this.serverManager.startServer(type);
+            }
+        }, 15, TimeUnit.SECONDS);
+
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
@@ -131,7 +140,7 @@ public class Hydra {
         try {
             final KeyFactory keyFactory = KeyFactory.getInstance(algorithm.getFamilyName());
 
-            this.privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(Files.readAllBytes(Paths.get("./data/private.key"))));
+            this.privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(Files.readAllBytes(References.PRIVATE_KEY_FILE)));
 
             System.out.println("Private key read from file.");
             System.out.println("Generating public key from private one...");
@@ -151,7 +160,7 @@ public class Hydra {
             try {
                 System.out.println("Writing private key in file...");
 
-                Files.write(Paths.get("./data/private.key"), this.privateKey.getEncoded());
+                Files.write(References.PRIVATE_KEY_FILE, this.privateKey.getEncoded());
             } catch (IOException ex) {
                 ex.printStackTrace();
             }

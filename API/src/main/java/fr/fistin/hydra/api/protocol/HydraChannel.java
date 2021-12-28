@@ -11,13 +11,10 @@ public class HydraChannel {
 
     /** Channel used to send a query to Hydra */
     public static final String QUERY = name("query");
-
     /** Channel used by servers to interact with Hydra */
     public static final String SERVERS = name("servers");
-
     /** Channel used by proxies to interact with Hydra */
     public static final String PROXIES = name("proxies");
-
     /** Channel used to send events */
     public static final String EVENTS = name("events");
 

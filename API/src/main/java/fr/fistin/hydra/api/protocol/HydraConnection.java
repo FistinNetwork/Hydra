@@ -3,11 +3,11 @@ package fr.fistin.hydra.api.protocol;
 import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 import fr.fistin.hydra.api.protocol.packet.HydraPacketRequest;
+import fr.fistin.hydra.api.protocol.packet.IHydraPacketReceiver;
 import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
-import fr.fistin.hydra.api.protocol.receiver.IHydraPacketReceiver;
 import fr.fistin.hydra.api.protocol.response.HydraResponse;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
-import fr.fistin.hydra.api.redis.receiver.IHydraChannelReceiver;
+import fr.fistin.hydra.api.redis.IHydraReceiver;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,8 +19,8 @@ import java.util.Map;
  */
 public class HydraConnection {
 
-    /** {@link IHydraPacketReceiver} of each {@link IHydraChannelReceiver} */
-    private final Map<IHydraPacketReceiver, IHydraChannelReceiver> packetReceivers;
+    /** {@link IHydraPacketReceiver} of each {@link IHydraReceiver} */
+    private final Map<IHydraPacketReceiver, IHydraReceiver> packetReceivers;
 
     /** {@link HydraAPI} instance */
     private final HydraAPI hydraAPI;
@@ -43,7 +43,7 @@ public class HydraConnection {
      */
     public void registerReceiver(String channel, IHydraPacketReceiver packetReceiver) {
         if (!this.packetReceivers.containsKey(packetReceiver)) {
-            final IHydraChannelReceiver receiver = (ch, message) -> {
+            final IHydraReceiver receiver = (ch, message) -> {
                 final HydraPacket packet = this.hydraAPI.getCodec().decode(message);
 
                 if (packet != null) {
@@ -83,7 +83,9 @@ public class HydraConnection {
      * @param packet Packet to send
      */
     public HydraPacketRequest sendPacket(String channel, HydraPacket packet) {
-        return new HydraPacketRequest(this.hydraAPI).withChannel(channel).withPacket(packet);
+        return new HydraPacketRequest(this.hydraAPI)
+                .withChannel(channel)
+                .withPacket(packet);
     }
 
 }

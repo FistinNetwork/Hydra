@@ -6,7 +6,7 @@ import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStartProxyPacket;
 import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStopProxyPacket;
 import fr.fistin.hydra.api.protocol.packet.model.server.HydraStartServerPacket;
 import fr.fistin.hydra.api.protocol.packet.model.server.HydraStopServerPacket;
-import fr.fistin.hydra.api.protocol.receiver.IHydraPacketReceiver;
+import fr.fistin.hydra.api.protocol.packet.IHydraPacketReceiver;
 import fr.fistin.hydra.api.protocol.response.HydraResponse;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 import fr.fistin.hydra.proxy.HydraProxyManager;
@@ -32,7 +32,7 @@ public class HydraQueryReceiver implements IHydraPacketReceiver {
         final HydraResponse response = new HydraResponse(HydraResponseType.NONE);
 
         if (packet instanceof HydraStartServerPacket) {
-            serverManager.startServer();
+            serverManager.startServer(((HydraStartServerPacket) packet).getServerType());
 
             response.withType(HydraResponseType.OK).withMessage("Creating it...");
         } else if (packet instanceof HydraStopServerPacket) {

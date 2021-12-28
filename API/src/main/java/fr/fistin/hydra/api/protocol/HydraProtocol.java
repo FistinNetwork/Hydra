@@ -3,6 +3,7 @@ package fr.fistin.hydra.api.protocol;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 import fr.fistin.hydra.api.protocol.packet.model.HydraHeartbeatPacket;
 import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
+import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraProxyServerActionPacket;
 import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStartProxyPacket;
 import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStopProxyPacket;
 import fr.fistin.hydra.api.protocol.packet.model.server.HydraStartServerPacket;
@@ -26,6 +27,7 @@ public enum HydraProtocol {
     /** Proxy */
     START_PROXY(30, HydraStartProxyPacket.class),
     STOP_PROXY(31, HydraStopProxyPacket.class),
+    PROXY_SERVER_ACTION(32, HydraProxyServerActionPacket.class),
 
     ;
 

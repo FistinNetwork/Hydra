@@ -26,7 +26,7 @@ public class HydraServerStartEvent extends HydraEvent {
      *
      * @return A name
      */
-    public String getServerId() {
+    public String getServerName() {
         return this.serverName;
     }
 

@@ -7,12 +7,10 @@ package fr.fistin.hydra.api.redis;
  */
 public class HydraPubSubMessage {
 
-    /** Channel */
+    /** Channel used to send the message */
     private final String channel;
-
     /** Message to send */
     private final String message;
-
     /** Callback to fire after sending message */
     private final Runnable callback;
 

@@ -169,11 +169,13 @@ public class HydraPacketRequest {
     public void exec() {
         final HydraConnection connection = this.hydraAPI.getConnection();
 
-        if (this.responseCallback != null) {
-            connection.registerReceiver(this.channel, new HydraResponseReceiver(this.hydraAPI, this));
-        }
+        if (this.packet != null) {
+            if (this.responseCallback != null) {
+                connection.registerReceiver(this.channel, new HydraResponseReceiver(this.hydraAPI, this));
+            }
 
-        this.hydraAPI.getPubSub().send(this.channel, this.hydraAPI.getCodec().encode(packet), this.sendingCallback);
+            this.hydraAPI.getPubSub().send(this.channel, this.hydraAPI.getCodec().encode(packet), this.sendingCallback);
+        }
     }
 
 }

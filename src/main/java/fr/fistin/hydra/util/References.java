@@ -22,6 +22,7 @@ public class References {
     /** Files */
     public static final Path LOG_FOLDER = Paths.get("logs");
     public static final Path LOG_FILE = Paths.get(LOG_FOLDER.toString(), "hydra.log");
+    public static final Path PRIVATE_KEY_FILE = Paths.get("data/private.key");
 
     /** Other */
     public static final Gson GSON = new GsonBuilder().create();

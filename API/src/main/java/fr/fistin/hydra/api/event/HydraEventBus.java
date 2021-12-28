@@ -5,7 +5,9 @@ import fr.fistin.hydra.api.protocol.HydraChannel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -90,7 +92,7 @@ public class HydraEventBus {
      * @return Encoded event
      */
     private String encode(HydraEvent event) {
-        return event.getClass().getName() + SPLIT_CHAR + HydraAPI.GSON.toJson(event);
+        return event.getClass().getName() + SPLIT_CHAR + Base64.getEncoder().encodeToString(HydraAPI.GSON.toJson(event).getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -103,7 +105,7 @@ public class HydraEventBus {
         try {
             final String[] splitedRaw  = message.split(SPLIT_CHAR);
             final Class<?> clazz = Class.forName(splitedRaw[0]);
-            final String json = splitedRaw[1];
+            final String json = new String(Base64.getDecoder().decode(splitedRaw[1]));
 
             return (HydraEvent) HydraAPI.GSON.fromJson(json, clazz);
         } catch (Exception e) {

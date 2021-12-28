@@ -4,7 +4,7 @@ import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 import fr.fistin.hydra.api.protocol.packet.HydraPacketRequest;
 import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
-import fr.fistin.hydra.api.protocol.receiver.IHydraPacketReceiver;
+import fr.fistin.hydra.api.protocol.packet.IHydraPacketReceiver;
 
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +51,7 @@ public class HydraResponseReceiver implements IHydraPacketReceiver {
                 }
 
                 if (responseCallback != null) {
-                    responseCallback.call(responsePacket.getResponse(), responsePacket.getMessage());
+                    responseCallback.call(new HydraResponse(responsePacket.getResponse(), responsePacket.getMessage()));
                 }
             }
         }

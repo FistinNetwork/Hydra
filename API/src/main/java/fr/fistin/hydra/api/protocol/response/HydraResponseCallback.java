@@ -10,9 +10,8 @@ public interface HydraResponseCallback {
     /**
      * Fired when a response is received for a packet sent
      *
-     * @param response Response's type
-     * @param message Response's message
+     * @param response The received response
      */
-    void call(HydraResponseType response, String message);
+    void call(HydraResponse response);
 
 }
