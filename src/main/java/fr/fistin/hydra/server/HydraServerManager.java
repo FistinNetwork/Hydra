@@ -1,17 +1,14 @@
 package fr.fistin.hydra.server;
 
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.api.event.model.HydraProxyStartEvent;
 import fr.fistin.hydra.api.event.model.HydraServerStartEvent;
 import fr.fistin.hydra.api.event.model.HydraServerStopEvent;
 import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.HydraConnection;
 import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraProxyServerActionPacket;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStopProxyPacket;
 import fr.fistin.hydra.api.protocol.packet.model.server.HydraStopServerPacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponseCallback;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
-import fr.fistin.hydra.api.proxy.HydraProxy;
 import fr.fistin.hydra.api.server.HydraServer;
 import fr.fistin.hydra.docker.swarm.DockerSwarm;
 
@@ -36,13 +33,12 @@ public class HydraServerManager {
 
     public void startServer(String type) {
         final HydraServer server = new HydraServer(type);
-        final HydraServerService service = new HydraServerService(server);
+        final HydraServerService service = new HydraServerService(this.hydra, server);
 
         this.swarm.runService(service);
         this.servers.add(server);
 
         this.connection.sendPacket(HydraChannel.PROXIES, new HydraProxyServerActionPacket(HydraProxyServerActionPacket.Action.ADD, server.getName()))
-                .withSendingCallback(() -> System.out.println("Hook packet sent!"))
                 .exec();
         this.hydra.getAPI().getEventBus().publish(new HydraServerStartEvent(server.getName()));
 
@@ -67,7 +63,9 @@ public class HydraServerManager {
             };
 
             this.connection.sendPacket(HydraChannel.PROXIES, new HydraProxyServerActionPacket(HydraProxyServerActionPacket.Action.REMOVE, name)).exec();
-            this.connection.sendPacket(HydraChannel.SERVERS, packet).withResponseCallback(responseCallback).exec();
+            this.connection.sendPacket(HydraChannel.SERVERS, packet)
+                    .withResponseCallback(responseCallback)
+                    .exec();
 
             return true;
         } else {

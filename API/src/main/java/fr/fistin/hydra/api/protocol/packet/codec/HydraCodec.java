@@ -1,6 +1,7 @@
 package fr.fistin.hydra.api.protocol.packet.codec;
 
 import fr.fistin.hydra.api.HydraAPI;
+import fr.fistin.hydra.api.HydraException;
 import fr.fistin.hydra.api.protocol.HydraProtocol;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 
@@ -46,7 +47,7 @@ public class HydraCodec implements IHydraCodec {
                 if (content != null) {
                     message = content;
                 } else {
-                    return null;
+                    throw new HydraException("Received an invalid jws! JWS: " + message + ".");
                 }
             } else {
                 if (this.hydraAPI.getType() != HydraAPI.Type.SERVER) {
@@ -61,7 +62,7 @@ public class HydraCodec implements IHydraCodec {
 
             return HydraAPI.GSON.fromJson(json, HydraProtocol.getPacketClassById(id));
         } catch (Exception e) {
-            return null;
+            throw new HydraException("An error occurred while decoding a received message. Message: " + message + ".", e);
         }
     }
 
@@ -75,13 +76,22 @@ public class HydraCodec implements IHydraCodec {
     @Override
     public String encode(HydraPacket packet) {
         final Base64.Encoder encoder = Base64.getEncoder();
-        final String encodedPacket = HydraProtocol.getPacketIdByClass(packet.getClass()) + HydraProtocol.SPLIT_CHAR + encoder.encodeToString(HydraAPI.GSON.toJson(packet).getBytes());
+        final int id = HydraProtocol.getPacketIdByClass(packet.getClass());
 
-        if (this.hydraAPI.getType() == HydraAPI.Type.SERVER && this.hydraAPI.getPrivateKey() != null) {
-            return this.hydraAPI.getJWTs().contentToJWS(encodedPacket);
+        if (id != -1) {
+            try {
+                final String encodedPacket = id + HydraProtocol.SPLIT_CHAR + encoder.encodeToString(HydraAPI.GSON.toJson(packet).getBytes());
+
+                if (this.hydraAPI.getType() == HydraAPI.Type.SERVER && this.hydraAPI.getPrivateKey() != null) {
+                    return this.hydraAPI.getJWTs().contentToJWS(encodedPacket);
+                }
+
+                return encodedPacket;
+            } catch (Exception e) {
+                throw new HydraException("An error occurred while encoding a packet! Packet: " + packet.getClass().getName(), e);
+            }
         }
-
-        return encodedPacket;
+        throw new HydraException("Couldn't find the id of the provided packet to encode! Packet: " + packet.getClass().getName() + ".");
     }
 
 }

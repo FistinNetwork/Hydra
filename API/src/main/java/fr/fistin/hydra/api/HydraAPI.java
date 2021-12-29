@@ -5,14 +5,21 @@ import com.google.gson.GsonBuilder;
 import fr.fistin.hydra.api.event.HydraEventBus;
 import fr.fistin.hydra.api.jwt.HydraJWTS;
 import fr.fistin.hydra.api.protocol.HydraConnection;
+import fr.fistin.hydra.api.protocol.environment.HydraEnvironment;
 import fr.fistin.hydra.api.protocol.packet.codec.HydraCodec;
 import fr.fistin.hydra.api.protocol.packet.codec.IHydraCodec;
 import fr.fistin.hydra.api.redis.HydraPubSub;
+import io.jsonwebtoken.SignatureAlgorithm;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
@@ -324,13 +331,13 @@ public class HydraAPI {
         public HydraAPI build() {
             if (this.type != null && this.logger != null && this.jedisPool != null) {
                 if (this.type == Type.CLIENT && this.publicKey == null) {
-                    throw new RuntimeException("If you are running on a client, public key cannot be null!");
+                    throw new HydraException("If you are running on a client, public key cannot be null!");
                 } else if (this.type == Type.SERVER && this.privateKey == null) {
-                    throw new RuntimeException("If you are running on a server, private key cannot be null!");
+                    throw new HydraException("If you are running on a server, private key cannot be null!");
                 }
                 return new HydraAPI(type, this.logger, this.logHeader, this.jedisPool, this.codec, this.privateKey, this.publicKey);
             }
-            throw new RuntimeException("Cannot build HydraAPI with a null value!");
+            throw new HydraException("Cannot build HydraAPI with a null value!");
         }
 
     }

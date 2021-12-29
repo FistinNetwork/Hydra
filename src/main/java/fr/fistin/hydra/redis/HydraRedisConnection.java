@@ -1,5 +1,6 @@
 package fr.fistin.hydra.redis;
 
+import fr.fistin.hydra.configuration.nested.HydraRedisConfiguration;
 import fr.fistin.hydra.util.References;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -22,10 +23,10 @@ public class HydraRedisConnection {
     private final int redisPort;
     private final String redisPass;
 
-    public HydraRedisConnection() {
-        this.redisHost = References.STACK_NAME + "_" + System.getenv("REDIS_HOST");
-        this.redisPort = Integer.parseInt(System.getenv("REDIS_PORT"));
-        this.redisPass = System.getenv("REDIS_PASS");
+    public HydraRedisConnection(HydraRedisConfiguration redisConfiguration) {
+        this.redisHost = redisConfiguration.getRedisHost();
+        this.redisPort = redisConfiguration.getRedisPort();
+        this.redisPass = redisConfiguration.getRedisPassword();
     }
 
     public boolean connect() {
@@ -35,9 +36,9 @@ public class HydraRedisConnection {
         config.setMaxTotal(-1);
 
         if (this.redisPass != null && !this.redisPass.isEmpty()) {
-            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 0, this.redisPass);
+            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 2000, this.redisPass);
         } else {
-            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 0);
+            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 2000);
         }
 
         try {

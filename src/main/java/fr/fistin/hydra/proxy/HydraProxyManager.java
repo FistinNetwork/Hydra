@@ -3,9 +3,7 @@ package fr.fistin.hydra.proxy;
 import fr.fistin.hydra.Hydra;
 import fr.fistin.hydra.api.event.model.HydraProxyStartEvent;
 import fr.fistin.hydra.api.event.model.HydraProxyStopEvent;
-import fr.fistin.hydra.api.event.model.HydraServerStartEvent;
 import fr.fistin.hydra.api.protocol.HydraChannel;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraProxyServerActionPacket;
 import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStopProxyPacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponseCallback;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
@@ -58,7 +56,9 @@ public class HydraProxyManager {
                 System.out.println("Stopping " + proxy.getName() + "...");
             };
 
-            this.hydra.getAPI().getConnection().sendPacket(HydraChannel.PROXIES, packet).withResponseCallback(responseCallback).exec();
+            this.hydra.getAPI().getConnection().sendPacket(HydraChannel.PROXIES, packet)
+                    .withResponseCallback(responseCallback)
+                    .exec();
 
             return true;
         } else {

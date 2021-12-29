@@ -3,6 +3,9 @@ package fr.fistin.hydra;
 import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.HydraConnection;
+import fr.fistin.hydra.api.protocol.environment.HydraEnvironment;
+import fr.fistin.hydra.configuration.HydraConfiguration;
+import fr.fistin.hydra.configuration.nested.HydraRedisConfiguration;
 import fr.fistin.hydra.docker.Docker;
 import fr.fistin.hydra.proxy.HydraProxyManager;
 import fr.fistin.hydra.receiver.HydraQueryReceiver;
@@ -11,14 +14,13 @@ import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.HydraLogger;
 import fr.fistin.hydra.util.logger.HydraLoggingOutputStream;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jline.console.ConsoleReader;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.InvalidKeySpecException;
@@ -37,19 +39,21 @@ public class Hydra {
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
-    /** Hydra */
-    private HydraAPI api;
-    private HydraProxyManager proxyManager;
-    private HydraServerManager serverManager;
-
-    /** State */
-    private boolean running = false;
-
     /** Docker */
     private Docker docker;
 
     /** Redis */
     private HydraRedisConnection redisConnection;
+
+    /** Hydra */
+    private HydraConfiguration configuration;
+    private HydraAPI api;
+    private HydraEnvironment environment;
+    private HydraProxyManager proxyManager;
+    private HydraServerManager serverManager;
+
+    /** State */
+    private boolean running = false;
 
     public void start() {
         HydraLogger.printHeaderMessage();
@@ -59,10 +63,13 @@ public class Hydra {
 
         System.out.println("Starting " + References.NAME + "...");
 
+        this.configuration = HydraConfiguration.load();
+
         this.loadKeys();
+        this.createEnvironment();
 
         this.docker = new Docker();
-        this.redisConnection = new HydraRedisConnection();
+        this.redisConnection = new HydraRedisConnection(this.configuration.getRedisConfiguration());
 
         if (!this.redisConnection.connect()) {
             System.exit(-1);
@@ -72,6 +79,7 @@ public class Hydra {
                 .withLogger(this.logger)
                 .withLogHeader("API")
                 .withPrivateKey(this.privateKey)
+                .withPublicKey(this.publicKey)
                 .withJedisPool(this.redisConnection.getJedisPool())
                 .build();
         this.api.start();
@@ -167,6 +175,14 @@ public class Hydra {
         }
     }
 
+    private void createEnvironment() {
+        System.out.println("Creating environment...");
+
+        final HydraRedisConfiguration config = this.configuration.getRedisConfiguration();
+
+        this.environment = new HydraEnvironment(config.getRedisHost(), config.getRedisPort(), config.getRedisPassword(), this.publicKey);
+    }
+
     private void registerReceivers() {
         final HydraConnection connection = this.api.getConnection();
 
@@ -181,20 +197,8 @@ public class Hydra {
         return this.logger;
     }
 
-    public PublicKey getPublicKey() {
-        return this.publicKey;
-    }
-
-    public HydraAPI getAPI() {
-        return this.api;
-    }
-
-    public HydraProxyManager getProxyManager() {
-        return this.proxyManager;
-    }
-
-    public HydraServerManager getServerManager() {
-        return this.serverManager;
+    public HydraConfiguration getConfiguration() {
+        return this.configuration;
     }
 
     public Docker getDocker() {
@@ -203,6 +207,26 @@ public class Hydra {
 
     public HydraRedisConnection getRedisConnection() {
         return this.redisConnection;
+    }
+
+    public PublicKey getPublicKey() {
+        return this.publicKey;
+    }
+
+    public HydraAPI getAPI() {
+        return this.api;
+    }
+
+    public HydraEnvironment getEnvironment() {
+        return this.environment;
+    }
+
+    public HydraProxyManager getProxyManager() {
+        return this.proxyManager;
+    }
+
+    public HydraServerManager getServerManager() {
+        return this.serverManager;
     }
 
     public boolean isRunning() {

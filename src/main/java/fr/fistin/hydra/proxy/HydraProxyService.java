@@ -9,7 +9,9 @@ import fr.fistin.hydra.docker.swarm.DockerService;
 import fr.fistin.hydra.util.PortUtil;
 import fr.fistin.hydra.util.References;
 
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * Project: Hydra
@@ -30,14 +32,22 @@ public class HydraProxyService extends DockerService {
         this.targetPort = 25577;
         this.publishedPort = PortUtil.nextAvailablePort(MIN_PORT, MAX_PORT);
 
-        this.addLabel(References.STACK_NAMESPACE_LABEL, References.STACK_NAME);
-        this.addEnv("TYPE", "WATERFALL");
-        this.addEnv("ENABLE_RCON", "FALSE");
-        this.addEnv("PLUGINS", "https://hyriode.fr/HydraBungee-1.0.0-all.jar");
-
-        this.addEnv("PUBLIC_KEY", Base64.getEncoder().encodeToString(hydra.getPublicKey().getEncoded()));
+        this.labels.put(References.STACK_NAMESPACE_LABEL, References.STACK_NAME);
+        this.envs = this.getEnvs(hydra);
 
         proxy.setPort(this.publishedPort);
+    }
+
+    private List<String> getEnvs(Hydra hydra) {
+        final List<String> envs = new ArrayList<>();
+
+        envs.add("TYPE=WATERFALL");
+        envs.add("ENABLE_RCON=FALSE");
+        envs.add("PLUGINS=https://hyriode.fr/HydraBungee-1.0.0-all.jar");
+
+        envs.addAll(hydra.getEnvironment().get());
+
+        return envs;
     }
 
 }

@@ -27,7 +27,7 @@ public enum HydraProtocol {
     /** Proxy */
     START_PROXY(30, HydraStartProxyPacket.class),
     STOP_PROXY(31, HydraStopProxyPacket.class),
-    PROXY_SERVER_ACTION(32, HydraProxyServerActionPacket.class),
+    SERVER_ACTION_PACKET(32, HydraProxyServerActionPacket.class),
 
     ;
 

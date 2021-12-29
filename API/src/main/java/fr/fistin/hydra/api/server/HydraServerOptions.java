@@ -73,11 +73,6 @@ public class HydraServerOptions {
         envs.add("DIFFICULTY=" + this.difficulty);
         envs.add("SPAWN_PROTECTION=" + this.spawnProtection);
         envs.add("ALLOW_FLIGHT=" + this.flight);
-        envs.add("EULA=true");
-        envs.add("TYPE=SPIGOT");
-        envs.add("VERSION=1.8.8-R0.1-SNAPSHOT-latest");
-        envs.add("ENABLE_RCON=false");
-        envs.add("ONLINE_MODE=false");
 
         return envs;
     }
