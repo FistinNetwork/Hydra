@@ -4,16 +4,16 @@ import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.HydraConnection;
 import fr.fistin.hydra.api.protocol.environment.HydraEnvironment;
-import fr.fistin.hydra.configuration.HydraConfiguration;
-import fr.fistin.hydra.configuration.nested.HydraRedisConfiguration;
+import fr.fistin.hydra.config.HydraConfig;
+import fr.fistin.hydra.config.HydraRedisConfig;
 import fr.fistin.hydra.docker.Docker;
 import fr.fistin.hydra.proxy.HydraProxyManager;
 import fr.fistin.hydra.receiver.HydraQueryReceiver;
-import fr.fistin.hydra.redis.HydraRedisConnection;
+import fr.fistin.hydra.redis.HydraRedis;
 import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.HydraLogger;
-import fr.fistin.hydra.util.logger.HydraLoggingOutputStream;
+import fr.fistin.hydra.util.logger.LoggingOutputStream;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jline.console.ConsoleReader;
@@ -43,10 +43,10 @@ public class Hydra {
     private Docker docker;
 
     /** Redis */
-    private HydraRedisConnection redisConnection;
+    private HydraRedis redis;
 
     /** Hydra */
-    private HydraConfiguration configuration;
+    private HydraConfig config;
     private HydraAPI api;
     private HydraEnvironment environment;
     private HydraProxyManager proxyManager;
@@ -56,6 +56,8 @@ public class Hydra {
     private boolean running = false;
 
     public void start() {
+        this.running = true;
+
         HydraLogger.printHeaderMessage();
 
         this.setupConsoleReader();
@@ -63,15 +65,15 @@ public class Hydra {
 
         System.out.println("Starting " + References.NAME + "...");
 
-        this.configuration = HydraConfiguration.load();
+        this.config = HydraConfig.load();
 
         this.loadKeys();
         this.createEnvironment();
 
         this.docker = new Docker();
-        this.redisConnection = new HydraRedisConnection(this.configuration.getRedisConfiguration());
+        this.redis = new HydraRedis(this.config.getRedis());
 
-        if (!this.redisConnection.connect()) {
+        if (!this.redis.connect()) {
             System.exit(-1);
         }
 
@@ -80,7 +82,7 @@ public class Hydra {
                 .withLogHeader("API")
                 .withPrivateKey(this.privateKey)
                 .withPublicKey(this.publicKey)
-                .withJedisPool(this.redisConnection.getJedisPool())
+                .withJedisPool(this.redis.getJedisPool())
                 .build();
         this.api.start();
         this.proxyManager = new HydraProxyManager(this);
@@ -89,8 +91,6 @@ public class Hydra {
         this.registerReceivers();
 
         this.proxyManager.startProxy();
-
-        this.running = true;
 
         this.api.getExecutorService().schedule(() -> {
             final String[] types = new String[]{"lobby", "rtf", "tnttag", "wr"};
@@ -109,9 +109,9 @@ public class Hydra {
 
             this.running = false;
 
-            if (this.redisConnection != null && this.redisConnection.isConnected()) {
+            if (this.redis != null && this.redis.isConnected()) {
                 this.api.stop("Stopping " + References.NAME + " application");
-                this.redisConnection.disconnect();
+                this.redis.disconnect();
             }
 
             System.out.println(References.NAME + " is now down. See you soon!");
@@ -135,8 +135,8 @@ public class Hydra {
 
             this.logger = new HydraLogger(this, References.NAME, References.LOG_FILE.toString());
 
-            System.setErr(new PrintStream(new HydraLoggingOutputStream(this.logger, Level.SEVERE), true));
-            System.setOut(new PrintStream(new HydraLoggingOutputStream(this.logger, Level.INFO), true));
+            System.setErr(new PrintStream(new LoggingOutputStream(this.logger, Level.SEVERE), true));
+            System.setOut(new PrintStream(new LoggingOutputStream(this.logger, Level.INFO), true));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -178,9 +178,9 @@ public class Hydra {
     private void createEnvironment() {
         System.out.println("Creating environment...");
 
-        final HydraRedisConfiguration config = this.configuration.getRedisConfiguration();
+        final HydraRedisConfig config = this.config.getRedis();
 
-        this.environment = new HydraEnvironment(config.getRedisHost(), config.getRedisPort(), config.getRedisPassword(), this.publicKey);
+        this.environment = new HydraEnvironment(config.getHost(), config.getPort(), config.getPassword(), this.publicKey);
     }
 
     private void registerReceivers() {
@@ -197,16 +197,16 @@ public class Hydra {
         return this.logger;
     }
 
-    public HydraConfiguration getConfiguration() {
-        return this.configuration;
+    public HydraConfig getConfig() {
+        return this.config;
     }
 
     public Docker getDocker() {
         return this.docker;
     }
 
-    public HydraRedisConnection getRedisConnection() {
-        return this.redisConnection;
+    public HydraRedis getRedis() {
+        return this.redis;
     }
 
     public PublicKey getPublicKey() {

@@ -8,12 +8,17 @@ import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStopProxyPacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponseCallback;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 import fr.fistin.hydra.api.proxy.HydraProxy;
+import fr.fistin.hydra.docker.image.DockerImage;
 import fr.fistin.hydra.docker.swarm.DockerSwarm;
+import fr.fistin.hydra.util.References;
 
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
 public class HydraProxyManager {
+
+    public static final DockerImage PROXY_IMAGE = new DockerImage("hydra-proxy", "latest");
 
     private final Set<HydraProxy> proxies;
 
@@ -25,6 +30,8 @@ public class HydraProxyManager {
         this.hydra = hydra;
         this.swarm = this.hydra.getDocker().getSwarm();
         this.proxies = new HashSet<>();
+
+        this.hydra.getDocker().getImageManager().buildImage(Paths.get(References.IMAGES_FOLDER.toString(), "ProxyDockerfile").toFile(), PROXY_IMAGE.getName());
     }
 
     public void startProxy() {

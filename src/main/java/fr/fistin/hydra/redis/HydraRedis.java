@@ -1,6 +1,6 @@
 package fr.fistin.hydra.redis;
 
-import fr.fistin.hydra.configuration.nested.HydraRedisConfiguration;
+import fr.fistin.hydra.config.HydraRedisConfig;
 import fr.fistin.hydra.util.References;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -11,7 +11,7 @@ import redis.clients.jedis.JedisPoolConfig;
  * Created by AstFaster
  * on 25/10/2021 at 09:51
  */
-public class HydraRedisConnection {
+public class HydraRedis {
 
     private JedisPool jedisPool;
 
@@ -23,10 +23,10 @@ public class HydraRedisConnection {
     private final int redisPort;
     private final String redisPass;
 
-    public HydraRedisConnection(HydraRedisConfiguration redisConfiguration) {
-        this.redisHost = redisConfiguration.getRedisHost();
-        this.redisPort = redisConfiguration.getRedisPort();
-        this.redisPass = redisConfiguration.getRedisPassword();
+    public HydraRedis(HydraRedisConfig redisConfig) {
+        this.redisHost = redisConfig.getHost();
+        this.redisPort = redisConfig.getPort();
+        this.redisPass = redisConfig.getPassword();
     }
 
     public boolean connect() {
@@ -52,7 +52,7 @@ public class HydraRedisConnection {
 
             return true;
         } catch (Exception e) {
-            System.err.println("Couldn't connect to Redis database !");
+            System.err.println("Couldn't connect to Redis database!");
             return false;
         }
     }

@@ -9,6 +9,8 @@ import fr.fistin.hydra.docker.Docker;
 import java.io.Closeable;
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class DockerImageManager {
 
@@ -40,16 +42,16 @@ public class DockerImageManager {
         }
     }
 
-    public void buildImage(File dockerFile) {
+    public void buildImage(File dockerFile, String tag) {
         try {
             final BuildImageResultCallback callback = new BuildImageResultCallback() {
                 @Override
                 public void onComplete() {
-                    System.out.println("Successfully build an image from '" + dockerFile.getName() + "' docker file.");
+                    System.out.println("Successfully build '" + tag + "' image from '" + dockerFile.getName() + "' file.");
                 }
             };
 
-            this.dockerClient.buildImageCmd(dockerFile).exec(callback).awaitCompletion();
+            this.dockerClient.buildImageCmd(dockerFile).withTags(Stream.of(tag).collect(Collectors.toSet())).exec(callback).awaitCompletion();
         } catch (InterruptedException e) {
             System.err.println("Couldn't build an image from '" + dockerFile.getName() + " docker file !");
         }

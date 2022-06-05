@@ -1,6 +1,6 @@
 package fr.fistin.hydra.util.logger;
 
-public enum HydraLogColor {
+public enum LogColor {
 
     BLACK('0', 0x00),
     DARK_BLUE('1', 0x1),
@@ -28,11 +28,11 @@ public enum HydraLogColor {
     public static final char COLOR_CHAR = '\u00A7';
     private final String toString;
 
-    HydraLogColor(char code, int intCode) {
+    LogColor(char code, int intCode) {
         this(code, intCode, false);
     }
 
-    HydraLogColor(char code, int intCode, boolean isFormat) {
+    LogColor(char code, int intCode, boolean isFormat) {
         this.toString = new String(new char[]{COLOR_CHAR, code});
     }
 

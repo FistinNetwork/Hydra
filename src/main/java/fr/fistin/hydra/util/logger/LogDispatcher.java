@@ -4,12 +4,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.LogRecord;
 
-public class HydraLogDispatcher extends Thread {
+class LogDispatcher extends Thread {
 
     private final HydraLogger logger;
     private final BlockingQueue<LogRecord> queue = new LinkedBlockingQueue<>();
 
-    public HydraLogDispatcher(HydraLogger logger) {
+    public LogDispatcher(HydraLogger logger) {
         super("Hydra Logger Thread");
         this.logger = logger;
     }

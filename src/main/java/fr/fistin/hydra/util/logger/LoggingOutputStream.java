@@ -7,12 +7,12 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HydraLoggingOutputStream extends ByteArrayOutputStream {
+public class LoggingOutputStream extends ByteArrayOutputStream {
 
     private final Logger logger;
     private final Level level;
 
-    public HydraLoggingOutputStream(Logger logger, Level level) {
+    public LoggingOutputStream(Logger logger, Level level) {
         this.logger = logger;
         this.level = level;
     }

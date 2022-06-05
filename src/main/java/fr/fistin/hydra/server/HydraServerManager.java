@@ -10,12 +10,17 @@ import fr.fistin.hydra.api.protocol.packet.model.server.HydraStopServerPacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponseCallback;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 import fr.fistin.hydra.api.server.HydraServer;
+import fr.fistin.hydra.docker.image.DockerImage;
 import fr.fistin.hydra.docker.swarm.DockerSwarm;
+import fr.fistin.hydra.util.References;
 
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
 public class HydraServerManager {
+
+    public static final DockerImage SERVER_IMAGE = new DockerImage("hydra-server", "latest");
 
     private final Set<HydraServer> servers;
 
@@ -29,6 +34,8 @@ public class HydraServerManager {
         this.connection = this.hydra.getAPI().getConnection();
         this.swarm = this.hydra.getDocker().getSwarm();
         this.servers = new HashSet<>();
+
+        this.hydra.getDocker().getImageManager().buildImage(Paths.get(References.IMAGES_FOLDER.toString(), "ServerDockerfile").toFile(), SERVER_IMAGE.getName());
     }
 
     public void startServer(String type) {

@@ -1,5 +1,5 @@
 # Build Application Jar
-FROM gradle:7.3.0-jdk8 AS build
+FROM gradle:7.4.2-jdk8 AS build
 
 WORKDIR /usr/app/
 
@@ -19,10 +19,7 @@ FROM openjdk:16-slim
 WORKDIR /usr/app/
 
 # Get all environments variables
-ENV MEMORY="1G" \
-    STACK_NAME="" \
-    REDIS_HOST="127.0.0.1" REDIS_PORT=6379 REDIS_PASS="" \
-    NETWORK_NAME=""
+ENV MEMORY="1G"
 
 # Copy previous builded Jar
 COPY --from=build /usr/app/build/libs/Hydra-all.jar /usr/app/Hydra.jar

@@ -13,28 +13,31 @@ import java.util.logging.*;
 
 public class HydraLogger extends Logger {
 
-    private final HydraLogDispatcher dispatcher = new HydraLogDispatcher(this);
+    private final LogDispatcher dispatcher = new LogDispatcher(this);
 
     @SuppressWarnings( { "CallToPrintStackTrace", "CallToThreadStartDuringObjectConstruction" } )
     public HydraLogger(Hydra hydra, String name, String filePattern) {
         super(name, null);
+
         this.setLevel(Level.ALL);
 
         try {
             final FileHandler fileHandler = new FileHandler(filePattern);
-            fileHandler.setFormatter(new HydraConciseFormatter(this, false));
-            this.addHandler(fileHandler);
+            final ColoredWriter consoleHandler = new ColoredWriter(hydra.getConsoleReader());
 
+            fileHandler.setFormatter(new ConciseFormatter(this, false));
 
-            final HydraColouredWriter consoleHandler = new HydraColouredWriter(hydra.getConsoleReader());
             consoleHandler.setLevel(Level.INFO);
-            consoleHandler.setFormatter(new HydraConciseFormatter(this, true));
-            this.addHandler(consoleHandler);
+            consoleHandler.setFormatter(new ConciseFormatter(this, true));
 
+            this.addHandler(fileHandler);
+            this.addHandler(consoleHandler);
         } catch (IOException e) {
-            System.err.println("Couldn't register logger !");
+            System.err.println("Couldn't register logger!");
+            e.printStackTrace();
             System.exit(-1);
         }
+
         this.dispatcher.start();
     }
 
@@ -65,12 +68,12 @@ public class HydraLogger extends Logger {
         System.out.println(text.replaceAll("\\$", "█"));
     }
 
-    private static class HydraConciseFormatter extends Formatter {
+    private static class ConciseFormatter extends Formatter {
 
         private final Logger logger;
         private final boolean colored;
 
-        public HydraConciseFormatter(Logger logger, boolean colored) {
+        public ConciseFormatter(Logger logger, boolean colored) {
             this.logger = logger;
             this.colored = colored;
         }
@@ -100,60 +103,60 @@ public class HydraLogger extends Logger {
 
         private void appendLevel(StringBuilder builder, Level level) {
             if (this.colored) {
-                HydraLogColor color;
+                LogColor color;
 
                 if (level == Level.INFO) {
-                    color = HydraLogColor.GREEN;
+                    color = LogColor.GREEN;
                 } else if (level == Level.WARNING) {
-                    color = HydraLogColor.YELLOW;
+                    color = LogColor.YELLOW;
                 } else if (level == Level.SEVERE) {
-                    color = HydraLogColor.RED;
+                    color = LogColor.RED;
                 } else {
-                    color = HydraLogColor.AQUA;
+                    color = LogColor.AQUA;
                 }
 
-                builder.append(color).append(level.getName()).append(HydraLogColor.RESET);
+                builder.append(color).append(level.getName()).append(LogColor.RESET);
             } else {
                 builder.append(level.getName());
             }
         }
     }
 
-    private static class HydraColouredWriter extends Handler {
+    private static class ColoredWriter extends Handler {
 
-        private final Map<HydraLogColor, String> replacements = new EnumMap<>(HydraLogColor.class);
-        private final HydraLogColor[] colors = HydraLogColor.values();
+        private final Map<LogColor, String> replacements = new EnumMap<>(LogColor.class);
+        private final LogColor[] colors = LogColor.values();
         private final ConsoleReader console;
 
-        public HydraColouredWriter(ConsoleReader console) {
+        public ColoredWriter(ConsoleReader console) {
             this.console = console;
 
-            this.replacements.put(HydraLogColor.BLACK, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLACK).boldOff().toString());
-            this.replacements.put(HydraLogColor.DARK_BLUE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLUE).boldOff().toString());
-            this.replacements.put(HydraLogColor.DARK_GREEN, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.GREEN).boldOff().toString());
-            this.replacements.put(HydraLogColor.DARK_AQUA, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.CYAN).boldOff().toString());
-            this.replacements.put(HydraLogColor.DARK_RED, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.RED).boldOff().toString());
-            this.replacements.put(HydraLogColor.DARK_PURPLE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.MAGENTA).boldOff().toString());
-            this.replacements.put(HydraLogColor.GOLD, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.YELLOW).boldOff().toString());
-            this.replacements.put(HydraLogColor.GRAY, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.WHITE).boldOff().toString());
-            this.replacements.put(HydraLogColor.DARK_GRAY, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLACK).bold().toString());
-            this.replacements.put(HydraLogColor.BLUE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLUE).bold().toString());
-            this.replacements.put(HydraLogColor.GREEN, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.GREEN).bold().toString());
-            this.replacements.put(HydraLogColor.AQUA, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.CYAN).bold().toString());
-            this.replacements.put(HydraLogColor.RED, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.RED).bold().toString());
-            this.replacements.put(HydraLogColor.LIGHT_PURPLE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.MAGENTA).bold().toString());
-            this.replacements.put(HydraLogColor.YELLOW, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.YELLOW).bold().toString());
-            this.replacements.put(HydraLogColor.WHITE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.WHITE).bold().toString());
-            this.replacements.put(HydraLogColor.MAGIC, Ansi.ansi().a(Ansi.Attribute.BLINK_SLOW).toString());
-            this.replacements.put(HydraLogColor.BOLD, Ansi.ansi().a(Ansi.Attribute.UNDERLINE_DOUBLE).toString());
-            this.replacements.put(HydraLogColor.STRIKETHROUGH, Ansi.ansi().a(Ansi.Attribute.STRIKETHROUGH_ON).toString());
-            this.replacements.put(HydraLogColor.UNDERLINE, Ansi.ansi().a(Ansi.Attribute.UNDERLINE).toString());
-            this.replacements.put(HydraLogColor.ITALIC, Ansi.ansi().a(Ansi.Attribute.ITALIC).toString());
-            this.replacements.put(HydraLogColor.RESET, Ansi.ansi().a(Ansi.Attribute.RESET).toString());
+            this.replacements.put(LogColor.BLACK, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLACK).boldOff().toString());
+            this.replacements.put(LogColor.DARK_BLUE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLUE).boldOff().toString());
+            this.replacements.put(LogColor.DARK_GREEN, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.GREEN).boldOff().toString());
+            this.replacements.put(LogColor.DARK_AQUA, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.CYAN).boldOff().toString());
+            this.replacements.put(LogColor.DARK_RED, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.RED).boldOff().toString());
+            this.replacements.put(LogColor.DARK_PURPLE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.MAGENTA).boldOff().toString());
+            this.replacements.put(LogColor.GOLD, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.YELLOW).boldOff().toString());
+            this.replacements.put(LogColor.GRAY, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.WHITE).boldOff().toString());
+            this.replacements.put(LogColor.DARK_GRAY, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLACK).bold().toString());
+            this.replacements.put(LogColor.BLUE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.BLUE).bold().toString());
+            this.replacements.put(LogColor.GREEN, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.GREEN).bold().toString());
+            this.replacements.put(LogColor.AQUA, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.CYAN).bold().toString());
+            this.replacements.put(LogColor.RED, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.RED).bold().toString());
+            this.replacements.put(LogColor.LIGHT_PURPLE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.MAGENTA).bold().toString());
+            this.replacements.put(LogColor.YELLOW, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.YELLOW).bold().toString());
+            this.replacements.put(LogColor.WHITE, Ansi.ansi().a(Ansi.Attribute.RESET).fg(Ansi.Color.WHITE).bold().toString());
+            this.replacements.put(LogColor.MAGIC, Ansi.ansi().a(Ansi.Attribute.BLINK_SLOW).toString());
+            this.replacements.put(LogColor.BOLD, Ansi.ansi().a(Ansi.Attribute.UNDERLINE_DOUBLE).toString());
+            this.replacements.put(LogColor.STRIKETHROUGH, Ansi.ansi().a(Ansi.Attribute.STRIKETHROUGH_ON).toString());
+            this.replacements.put(LogColor.UNDERLINE, Ansi.ansi().a(Ansi.Attribute.UNDERLINE).toString());
+            this.replacements.put(LogColor.ITALIC, Ansi.ansi().a(Ansi.Attribute.ITALIC).toString());
+            this.replacements.put(LogColor.RESET, Ansi.ansi().a(Ansi.Attribute.RESET).toString());
         }
 
         public void print(String s) {
-            for (HydraLogColor color : this.colors) {
+            for (LogColor color : this.colors) {
                 s = s.replaceAll("(?i)" + color, this.replacements.get(color));
             }
 
