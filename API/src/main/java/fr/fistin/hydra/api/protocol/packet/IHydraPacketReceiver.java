@@ -1,5 +1,6 @@
 package fr.fistin.hydra.api.protocol.packet;
 
+import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.response.HydraResponse;
 
 /**
@@ -12,10 +13,11 @@ public interface IHydraPacketReceiver {
     /**
      * Called when a packet is received on Hydra connection
      *
-     * @param channel - Received message channel
-     * @param packet - Received packet
-     * @return A response to the packet with type and message
+     * @param channel The channel where the paket has been received
+     * @param header The header of the received packet
+     * @param packet The received packet
+     * @return The response to send back
      */
-    HydraResponse receive(String channel, HydraPacket packet);
+    HydraResponse receive(HydraChannel channel, HydraPacketHeader header, HydraPacket packet);
 
 }

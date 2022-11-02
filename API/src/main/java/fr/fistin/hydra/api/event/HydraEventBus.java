@@ -42,7 +42,7 @@ public class HydraEventBus {
     public void start() {
         HydraAPI.log("Starting event bus...");
 
-        this.hydraAPI.getPubSub().subscribe(HydraChannel.EVENTS, (channel, message) -> {
+        this.hydraAPI.getPubSub().subscribe(HydraChannel.EVENTS.getName(), (channel, message) -> {
             final HydraEvent event = this.decode(message);
 
             if (event != null) {
@@ -82,7 +82,7 @@ public class HydraEventBus {
      * @param <E> Type
      */
     public <E extends HydraEvent> void publish(E event) {
-        this.hydraAPI.getPubSub().send(HydraChannel.EVENTS, this.encode(event));
+        this.hydraAPI.getPubSub().send(HydraChannel.EVENTS.getName(), this.encode(event));
     }
 
     /**
@@ -103,9 +103,9 @@ public class HydraEventBus {
      */
     private HydraEvent decode(String message) {
         try {
-            final String[] splitedRaw  = message.split(SPLIT_CHAR);
-            final Class<?> clazz = Class.forName(splitedRaw[0]);
-            final String json = new String(Base64.getDecoder().decode(splitedRaw[1]));
+            final String[] splitRaw  = message.split(SPLIT_CHAR);
+            final Class<?> clazz = Class.forName(splitRaw[0]);
+            final String json = new String(Base64.getDecoder().decode(splitRaw[1]));
 
             return (HydraEvent) HydraAPI.GSON.fromJson(json, clazz);
         } catch (Exception e) {

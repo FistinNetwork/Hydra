@@ -4,8 +4,9 @@ import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
 import fr.fistin.hydra.api.protocol.packet.HydraPacketRequest;
 import fr.fistin.hydra.api.protocol.packet.IHydraPacketReceiver;
-import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
+import fr.fistin.hydra.api.protocol.packet.codec.HydraCodec;
 import fr.fistin.hydra.api.protocol.response.HydraResponse;
+import fr.fistin.hydra.api.protocol.response.HydraResponsePacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 import fr.fistin.hydra.api.redis.IHydraReceiver;
 
@@ -22,6 +23,8 @@ public class HydraConnection {
     /** {@link IHydraPacketReceiver} of each {@link IHydraReceiver} */
     private final Map<IHydraPacketReceiver, IHydraReceiver> packetReceivers;
 
+    /** The packets encoder and decoder instance */
+    private final HydraCodec codec;
     /** {@link HydraAPI} instance */
     private final HydraAPI hydraAPI;
 
@@ -32,6 +35,7 @@ public class HydraConnection {
      */
     public HydraConnection(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
+        this.codec = new HydraCodec(this.hydraAPI);
         this.packetReceivers = new HashMap<>();
     }
 
@@ -41,13 +45,14 @@ public class HydraConnection {
      * @param channel Channel to listen
      * @param packetReceiver Receiver to subscribe
      */
-    public void registerReceiver(String channel, IHydraPacketReceiver packetReceiver) {
+    public void registerReceiver(HydraChannel channel, IHydraPacketReceiver packetReceiver) {
         if (!this.packetReceivers.containsKey(packetReceiver)) {
             final IHydraReceiver receiver = (ch, message) -> {
-                final HydraPacket packet = this.hydraAPI.getCodec().decode(message);
+                final HydraCodec.DecodingResult decodingResult = this.codec.decode(message);
 
-                if (packet != null) {
-                    final HydraResponse response = packetReceiver.receive(channel, packet);
+                if (decodingResult != null) {
+                    final HydraPacket packet = decodingResult.getPacket();
+                    final HydraResponse response = packetReceiver.receive(channel, decodingResult.getPacketHeader(), packet);
 
                     if (response != null) {
                         final HydraResponseType type = response.getType();
@@ -62,7 +67,7 @@ public class HydraConnection {
             };
 
             this.packetReceivers.put(packetReceiver, receiver);
-            this.hydraAPI.getPubSub().subscribe(channel, receiver);
+            this.hydraAPI.getPubSub().subscribe(channel.getName(), receiver);
         }
     }
 
@@ -72,8 +77,8 @@ public class HydraConnection {
      * @param channel Receiver's channel
      * @param packetReceiver Packet receiver to unregister
      */
-    public void unregisterReceiver(String channel, IHydraPacketReceiver packetReceiver) {
-        this.hydraAPI.getPubSub().unsubscribe(channel, this.packetReceivers.remove(packetReceiver));
+    public void unregisterReceiver(HydraChannel channel, IHydraPacketReceiver packetReceiver) {
+        this.hydraAPI.getPubSub().unsubscribe(channel.getName(), this.packetReceivers.remove(packetReceiver));
     }
 
     /**
@@ -82,10 +87,19 @@ public class HydraConnection {
      * @param channel Channel
      * @param packet Packet to send
      */
-    public HydraPacketRequest sendPacket(String channel, HydraPacket packet) {
+    public HydraPacketRequest sendPacket(HydraChannel channel, HydraPacket packet) {
         return new HydraPacketRequest(this.hydraAPI)
                 .withChannel(channel)
                 .withPacket(packet);
+    }
+
+    /**
+     * Get the coded used to encode and decode packets
+     *
+     * @return The {@link HydraCodec} instance
+     */
+    public HydraCodec getCodec() {
+        return this.codec;
     }
 
 }

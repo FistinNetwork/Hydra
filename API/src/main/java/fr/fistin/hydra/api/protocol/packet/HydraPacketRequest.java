@@ -1,11 +1,11 @@
 package fr.fistin.hydra.api.protocol.packet;
 
 import fr.fistin.hydra.api.HydraAPI;
+import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.HydraConnection;
-import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponse;
 import fr.fistin.hydra.api.protocol.response.HydraResponseCallback;
-import fr.fistin.hydra.api.protocol.response.HydraResponseReceiver;
+import fr.fistin.hydra.api.protocol.response.HydraResponsePacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 
 import java.util.concurrent.TimeUnit;
@@ -20,15 +20,11 @@ public class HydraPacketRequest {
     /** Packet to send */
     private HydraPacket packet;
     /** Channel to send the packet */
-    private String channel;
-    /** Callback to fire after sending the packet */
-    private Runnable sendingCallback;
+    private HydraChannel channel;
     /** Response callback to fire when a response of this request is received */
     private HydraResponseCallback responseCallback;
-    /** The maximum of responses to handle */
-    private int maxResponses = 1;
     /** The maximum of time to wait for responses (in millis) */
-    private long responsesTime = 5000;
+    private long timeout = 5000;
 
     /** {@link HydraAPI} instance */
     private final HydraAPI hydraAPI;
@@ -65,10 +61,10 @@ public class HydraPacketRequest {
     /**
      * Set the request's channel
      *
-     * @param channel Channel to send the packet
+     * @param channel The channel to send the packet
      * @return {@link HydraPacketRequest} instance
      */
-    public HydraPacketRequest withChannel(String channel) {
+    public HydraPacketRequest withChannel(HydraChannel channel) {
         this.channel = channel;
         return this;
     }
@@ -78,28 +74,8 @@ public class HydraPacketRequest {
      *
      * @return The request's channel
      */
-    public String getChannel() {
+    public HydraChannel getChannel() {
         return this.channel;
-    }
-
-    /**
-     * Set the request's callback
-     *
-     * @param sendingCallback Callback fired after sending the packet
-     * @return {@link HydraPacketRequest} instance
-     */
-    public HydraPacketRequest withSendingCallback(Runnable sendingCallback) {
-        this.sendingCallback = sendingCallback;
-        return this;
-    }
-
-    /**
-     * Get the callback fired after executing the request
-     *
-     * @return A {@link Runnable}
-     */
-    public Runnable getSendingCallback() {
-        return this.sendingCallback;
     }
 
     /**
@@ -123,44 +99,34 @@ public class HydraPacketRequest {
     }
 
     /**
-     * Set the maximum of responses to handle
+     * Set the timeout to stop handling responses
      *
-     * @param maxResponses New maximum of responses
-     * @return {@link HydraPacketRequest} instance
+     * @param timeout The timeout value
+     * @return This {@link HydraPacketRequest} object
      */
-    public HydraPacketRequest withMaxResponses(int maxResponses) {
-        this.maxResponses = maxResponses;
+    public HydraPacketRequest withTimeout(long timeout) {
+        this.timeout = timeout;
         return this;
     }
 
     /**
-     * Get the maximum of responses the request can handle
+     * Set the timeout to stop handling responses
      *
-     * @return THe maximum of responses
+     * @param timeout The timeout value
+     * @param unit The unit of the timeout value
+     * @return This {@link HydraPacketRequest} object
      */
-    public int getMaxResponses() {
-        return this.maxResponses;
+    public HydraPacketRequest withTimeout(long timeout, TimeUnit unit) {
+        return this.withTimeout(unit.toMillis(timeout));
     }
 
     /**
-     * Set the maximum of time to wait for responses
+     * Get the timeout of responses handling
      *
-     * @param responsesTime The time to wait
-     * @param unit The unit of the provided time
-     * @return {@link HydraPacketRequest} instance
+     * @return A timeout (in milliseconds)
      */
-    public HydraPacketRequest withResponsesTime(long responsesTime, TimeUnit unit) {
-        this.responsesTime = unit.toMillis(responsesTime);
-        return this;
-    }
-
-    /**
-     * Get the maximum of time to wait for all responses
-     *
-     * @return A time in milliseconds
-     */
-    public long getResponsesTime() {
-        return this.responsesTime;
+    public long getTimeout() {
+        return this.timeout;
     }
 
     /**
@@ -171,11 +137,36 @@ public class HydraPacketRequest {
 
         if (this.packet != null) {
             if (this.responseCallback != null) {
-                connection.registerReceiver(this.channel, new HydraResponseReceiver(this.hydraAPI, this));
+                connection.registerReceiver(this.channel, new ResponseReceiver());
             }
 
-            this.hydraAPI.getPubSub().send(this.channel, this.hydraAPI.getCodec().encode(packet), this.sendingCallback);
+            this.hydraAPI.getPubSub().send(this.channel.getName(), connection.getCodec().encode(this.packet));
         }
+    }
+
+    private class ResponseReceiver implements IHydraPacketReceiver {
+
+        /**
+         * Constructor of {@link ResponseReceiver}
+         */
+        public ResponseReceiver() {
+            hydraAPI.getExecutorService().schedule(() -> hydraAPI.getConnection().unregisterReceiver(channel, this), timeout, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public HydraResponse receive(HydraChannel channel, HydraPacketHeader header, HydraPacket packet) {
+            if (packet instanceof HydraResponsePacket) {
+                final HydraResponsePacket responsePacket = (HydraResponsePacket) packet;
+
+                if (responsePacket.getRespondedPacketUniqueId().equals(packet.getUniqueId())) {
+                    if (responseCallback != null) {
+                        responseCallback.call(new HydraResponse(responsePacket.getResponse(), responsePacket.getMessage()));
+                    }
+                }
+            }
+            return HydraResponseType.NONE.asResponse();
+        }
+
     }
 
 }

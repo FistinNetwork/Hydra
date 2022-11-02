@@ -2,6 +2,7 @@ package fr.fistin.hydra.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import fr.fistin.hydra.api.protocol.data.RedisData;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -13,21 +14,19 @@ import java.nio.file.Paths;
  */
 public class HydraConfig {
 
-    private static HydraConfig instance;
+    private final RedisData redis;
+    private final DockerConfig docker;
 
-    private final HydraRedisConfig redis;
-    private final HydraDockerConfig docker;
-
-    public HydraConfig(HydraRedisConfig redis, HydraDockerConfig docker) {
+    public HydraConfig(RedisData redis, DockerConfig docker) {
         this.redis = redis;
         this.docker = docker;
     }
 
-    public HydraRedisConfig getRedis() {
+    public RedisData getRedis() {
         return this.redis;
     }
 
-    public HydraDockerConfig getDocker() {
+    public DockerConfig getDocker() {
         return this.docker;
     }
 
@@ -37,14 +36,10 @@ public class HydraConfig {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
         try {
-            return instance = mapper.readValue(Paths.get("./config.yml").toFile(), HydraConfig.class);
+            return mapper.readValue(Paths.get("./config.yml").toFile(), HydraConfig.class);
         } catch (IOException e) {
             throw new RuntimeException("An error occurred while loading Hydra config!", e);
         }
-    }
-
-    public static HydraConfig get() {
-        return instance;
     }
 
 }

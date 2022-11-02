@@ -1,10 +1,10 @@
 package fr.fistin.hydra.docker.network;
 
-import fr.fistin.hydra.config.HydraConfig;
+import fr.fistin.hydra.Hydra;
 
 public class DockerNetwork {
 
-    public static final DockerNetwork HYDRA = new DockerNetwork(HydraConfig.get().getDocker().getStackName() + "_" + HydraConfig.get().getDocker().getNetworkName(), DockerNetworkDriver.OVERLAY);
+    public static final DockerNetwork HYDRA = new DockerNetwork(Hydra.get().getConfig().getDocker().getStackName() + "_" + Hydra.get().getConfig().getDocker().getNetworkName(), DockerNetworkDriver.OVERLAY);
 
     private final String name;
     private final DockerNetworkDriver networkDriver;

@@ -1,58 +1,45 @@
 package fr.fistin.hydra.receiver;
 
 import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStartProxyPacket;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStopProxyPacket;
-import fr.fistin.hydra.api.protocol.packet.model.server.HydraStartServerPacket;
-import fr.fistin.hydra.api.protocol.packet.model.server.HydraStopServerPacket;
+import fr.fistin.hydra.api.protocol.packet.HydraPacketHeader;
 import fr.fistin.hydra.api.protocol.packet.IHydraPacketReceiver;
 import fr.fistin.hydra.api.protocol.response.HydraResponse;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
+import fr.fistin.hydra.api.proxy.packet.HydraStartProxyPacket;
+import fr.fistin.hydra.api.proxy.packet.HydraStopProxyPacket;
+import fr.fistin.hydra.api.server.packet.HydraStartServerPacket;
+import fr.fistin.hydra.api.server.packet.HydraStopServerPacket;
 import fr.fistin.hydra.proxy.HydraProxyManager;
 import fr.fistin.hydra.server.HydraServerManager;
 
 /**
- * Project: Hydra
  * Created by AstFaster
- * on 27/11/2021 at 10:44
+ * on 02/11/2022 at 09:27
  */
 public class HydraQueryReceiver implements IHydraPacketReceiver {
 
-    private final Hydra hydra;
+    private final HydraServerManager serverManager;
+    private final HydraProxyManager proxyManager;
 
-    public HydraQueryReceiver(Hydra hydra) {
-        this.hydra = hydra;
+    public HydraQueryReceiver() {
+        this.serverManager = Hydra.get().getServerManager();
+        this.proxyManager = Hydra.get().getProxyManager();
     }
 
     @Override
-    public HydraResponse receive(String channel, HydraPacket packet) {
-        final HydraServerManager serverManager = this.hydra.getServerManager();
-        final HydraProxyManager proxyManager = this.hydra.getProxyManager();
-        final HydraResponse response = new HydraResponse(HydraResponseType.NONE);
-
-        if (packet instanceof HydraStartServerPacket) {
-            serverManager.startServer(((HydraStartServerPacket) packet).getServerType());
-
-            response.withType(HydraResponseType.OK).withMessage("Creating it...");
-        } else if (packet instanceof HydraStopServerPacket) {
-            if (serverManager.stopServer(((HydraStopServerPacket) packet).getServerName())) {
-                response.withType(HydraResponseType.OK).withMessage("Stopping it...");
-            } else {
-                response.withType(HydraResponseType.NOT_OK).withMessage("Invalid server name!");
-            }
-        } else if (packet instanceof HydraStartProxyPacket) {
-            proxyManager.startProxy();
-
-            response.withType(HydraResponseType.OK).withMessage("Creating it...");
-        } else if (packet instanceof HydraStopProxyPacket) {
-            if (proxyManager.stopProxy(((HydraStopProxyPacket) packet).getProxyName())) {
-                response.withType(HydraResponseType.OK).withMessage("Stopping it...");
-            } else {
-                response.withType(HydraResponseType.NOT_OK).withMessage("Invalid proxy name!");
-            }
+    public HydraResponse receive(HydraChannel channel, HydraPacketHeader header, HydraPacket packet) {
+        if (packet instanceof final HydraStartServerPacket serverPacket) {
+            return new HydraResponse(HydraResponseType.OK).withMessage(this.serverManager.startServer(serverPacket.getServerInfo()));
+        } else if (packet instanceof final HydraStopServerPacket serverPacket) {
+            return (this.serverManager.stopServer(serverPacket.getServerName()) ? HydraResponseType.OK : HydraResponseType.NOT_OK).asResponse();
+        } else if (packet instanceof final HydraStartProxyPacket proxyPacket) {
+            return new HydraResponse(HydraResponseType.OK).withMessage(this.proxyManager.startProxy(proxyPacket.getProxyInfo()));
+        } else if (packet instanceof final HydraStopProxyPacket proxyPacket) {
+            return (this.proxyManager.stopProxy(proxyPacket.getProxyName()) ? HydraResponseType.OK : HydraResponseType.NOT_OK).asResponse();
         }
-        return response;
+        return HydraResponseType.NONE.asResponse();
     }
 
 }

@@ -3,23 +3,12 @@ package fr.fistin.hydra.api;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import fr.fistin.hydra.api.event.HydraEventBus;
-import fr.fistin.hydra.api.jwt.HydraJWTS;
 import fr.fistin.hydra.api.protocol.HydraConnection;
-import fr.fistin.hydra.api.protocol.environment.HydraEnvironment;
-import fr.fistin.hydra.api.protocol.packet.codec.HydraCodec;
-import fr.fistin.hydra.api.protocol.packet.codec.IHydraCodec;
+import fr.fistin.hydra.api.proxy.HydraProxiesService;
 import fr.fistin.hydra.api.redis.HydraPubSub;
-import io.jsonwebtoken.SignatureAlgorithm;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
+import fr.fistin.hydra.api.redis.IHydraRedis;
+import fr.fistin.hydra.api.server.HydraServersService;
 
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
@@ -36,19 +25,20 @@ public class HydraAPI {
     public static final String HYDRA_NAME = "Hydra";
     public static final String NAME = HYDRA_NAME + "API";
     public static final Gson GSON = new GsonBuilder().create();
+    /** The Redis prefix hash of Hydra */
+    public static final String HYDRA_HASH = "hydra:";
+
+    /** A logger used to print info */
+    private static Logger logger;
+    /** The log header to add before all messages sent by {@link HydraAPI} */
+    private static String logHeader;
 
     /** The type of the application that {@link HydraAPI} is running on */
     private final Type type;
-    /** The {@link JedisPool} instance */
-    private final JedisPool jedisPool;
-    /** The codec to use for packets */
-    private final IHydraCodec codec;
-    /** The private key used to sign requests */
-    private final PrivateKey privateKey;
-    /** The public key used to verify requests */
-    private final PublicKey publicKey;
-    /** The Hydra JWT manager */
-    private final HydraJWTS jwts;
+    /** The name of the application that {@link HydraAPI} is running on */
+    private final String application;
+    /** The {@link IHydraRedis} instance */
+    private final IHydraRedis redis;
     /** An executor service that can schedule tasks */
     private final ScheduledExecutorService executorService;
     /** Redis PubSub instance */
@@ -57,34 +47,32 @@ public class HydraAPI {
     private final HydraConnection connection;
     /** Hydra event bus */
     private final HydraEventBus eventBus;
-    /** A logger used to print info */
-    private static Logger logger;
-    /** The log header to add before all messages sent by {@link HydraAPI} */
-    private static String logHeader;
+    /** The service to interact with servers system */
+    private final HydraServersService serversService;
+    /** THe service to interact with proxies system */
+    private final HydraProxiesService proxiesService;
 
     /**
      * Constructor of {@link HydraAPI}
+     *
      * @param type The application type
+     * @param application The application name
      * @param logger The logger used to print info
      * @param logHeader The log header used by the logger
-     * @param jedisPool The {@link JedisPool} instance
-     * @param codec The codec used for packets
-     * @param privateKey The private key
-     * @param publicKey The public key
+     * @param redis The {@link IHydraRedis} instance
      */
-    private HydraAPI(Type type, Logger logger, String logHeader, JedisPool jedisPool, IHydraCodec codec, PrivateKey privateKey, PublicKey publicKey) {
+    private HydraAPI(Type type, String application, Logger logger, String logHeader, IHydraRedis redis) {
         this.type = type;
+        this.application = application;
         HydraAPI.logger = logger;
         HydraAPI.logHeader = logHeader;
-        this.jedisPool = jedisPool;
-        this.codec = codec == null ? new HydraCodec(this) : codec;
-        this.privateKey = privateKey;
-        this.publicKey = publicKey;
-        this.jwts = new HydraJWTS(this);
+        this.redis = redis;
         this.executorService = Executors.newScheduledThreadPool(32);
         this.pubSub = new HydraPubSub(this);
         this.connection = new HydraConnection(this);
         this.eventBus = new HydraEventBus(this);
+        this.serversService = new HydraServersService(this);
+        this.proxiesService = new HydraProxiesService(this);
     }
 
     /**
@@ -127,7 +115,7 @@ public class HydraAPI {
     }
 
     /**
-     * Get running application type
+     * Get the running application type
      *
      * @return A {@link Type}
      */
@@ -136,48 +124,21 @@ public class HydraAPI {
     }
 
     /**
-     * Get a resource from Redis
+     * Get the running application name
      *
-     * @return {@link Jedis} object
+     * @return An application name
      */
-    public Jedis getRedisResource() {
-        return this.jedisPool.getResource();
+    public String getApplication() {
+        return this.application;
     }
 
     /**
-     * Get the codec used for packets
+     * Get the {@link IHydraRedis} instance
      *
-     * @return {@link IHydraCodec} instance
+     * @return The {@link IHydraRedis} instance
      */
-    public IHydraCodec getCodec() {
-        return this.codec;
-    }
-
-    /**
-     * Get the private key used to sign requests
-     *
-     * @return The private key
-     */
-    public PrivateKey getPrivateKey() {
-        return this.privateKey;
-    }
-
-    /**
-     * Get the public key used to verify requests
-     *
-     * @return The public key
-     */
-    public PublicKey getPublicKey() {
-        return this.publicKey;
-    }
-
-    /**
-     * Get the JWTs manager instance
-     *
-     * @return {@link HydraJWTS} instance
-     */
-    public HydraJWTS getJWTs() {
-        return this.jwts;
+    public IHydraRedis getRedis() {
+        return this.redis;
     }
 
     /**
@@ -217,39 +178,55 @@ public class HydraAPI {
     }
 
     /**
+     * Get the service used to interact with servers
+     *
+     * @return The {@link HydraServersService} instance
+     */
+    public HydraServersService getServersService() {
+        return this.serversService;
+    }
+
+    /**
+     * Get the service used to interact with proxies
+     *
+     * @return The {@link HydraProxiesService} instance
+     */
+    public HydraProxiesService getProxiesService() {
+        return this.proxiesService;
+    }
+
+    /**
      * The builder class of {@link HydraAPI}
      */
     public static class Builder {
 
         /** The type of the application running {@link HydraAPI} */
         private Type type;
+        /** The application name */
+        private String application;
         /** The logger */
         private Logger logger = Logger.getLogger("HydraAPI");
         /** The log header to add before all messages */
         private String logHeader = null;
-        /** The {@link JedisPool} instance */
-        private JedisPool jedisPool;
-        /** The codec used to encode and decode packets */
-        private IHydraCodec codec;
-        /** The private key used to authenticate sends (only if the application is {@link Type#SERVER} */
-        private PrivateKey privateKey;
-        /** The public key used to verify the authenticity of messages received (only if the application is {@link Type#CLIENT} */
-        private PublicKey publicKey;
+        /** The {@link IHydraRedis} instance */
+        private IHydraRedis redis;
 
         /**
          * Constructor of {@link Builder}
          *
          * @param type The required application type
+         * @param application The required application name
          */
-        public Builder(Type type) {
+        public Builder(Type type, String application) {
             this.type = type;
+            this.application = application;
         }
 
         /**
          * Set the application type
          *
          * @param type New {@link Type}
-         * @return {@link Builder}
+         * @return This {@link Builder} instance
          */
         public Builder withType(Type type) {
             this.type = type;
@@ -257,10 +234,21 @@ public class HydraAPI {
         }
 
         /**
+         * Set the application name
+         *
+         * @param application New application name
+         * @return This {@link Builder} instance
+         */
+        public Builder withApplication(String application) {
+            this.application = application;
+            return this;
+        }
+
+        /**
          * Set the logger
          *
          * @param logger New logger
-         * @return {@link Builder}
+         * @return This {@link Builder} instance
          */
         public Builder withLogger(Logger logger) {
             this.logger = logger;
@@ -271,7 +259,7 @@ public class HydraAPI {
          * Set the log header
          *
          * @param logHeader New log header
-         * @return {@link Builder}
+         * @return This {@link Builder} instance
          */
         public Builder withLogHeader(String logHeader) {
             this.logHeader = logHeader;
@@ -279,46 +267,13 @@ public class HydraAPI {
         }
 
         /**
-         * Set the {@link JedisPool} instance
+         * Set the {@link IHydraRedis} instance
          *
-         * @param jedisPool New {@link JedisPool}
-         * @return {@link Builder}
+         * @param redis New {@link IHydraRedis}
+         * @return This {@link Builder} instance
          */
-        public Builder withJedisPool(JedisPool jedisPool) {
-            this.jedisPool = jedisPool;
-            return this;
-        }
-
-        /**
-         * Set the codec
-         *
-         * @param codec New codec
-         * @return {@link Builder}
-         */
-        public Builder withCodec(IHydraCodec codec) {
-            this.codec = codec;
-            return this;
-        }
-
-        /**
-         * Set the private key used to authenticate requests
-         *
-         * @param privateKey New private key
-         * @return {@link Builder}
-         */
-        public Builder withPrivateKey(PrivateKey privateKey) {
-            this.privateKey = privateKey;
-            return this;
-        }
-
-        /**
-         * Set the public key used to verify authenticity of received messages
-         *
-         * @param publicKey New public key
-         * @return {@link Builder}
-         */
-        public Builder withPublicKey(PublicKey publicKey) {
-            this.publicKey = publicKey;
+        public Builder withRedis(IHydraRedis redis) {
+            this.redis = redis;
             return this;
         }
 
@@ -326,16 +281,11 @@ public class HydraAPI {
          * Build the builder to an instance of {@link HydraAPI}<br>
          * Warning: some builder variables cannot be null!
          *
-         * @return {@link HydraAPI} instance
+         * @return The created {@link HydraAPI} instance
          */
         public HydraAPI build() {
-            if (this.type != null && this.logger != null && this.jedisPool != null) {
-                if (this.type == Type.CLIENT && this.publicKey == null) {
-                    throw new HydraException("If you are running on a client, public key cannot be null!");
-                } else if (this.type == Type.SERVER && this.privateKey == null) {
-                    throw new HydraException("If you are running on a server, private key cannot be null!");
-                }
-                return new HydraAPI(type, this.logger, this.logHeader, this.jedisPool, this.codec, this.privateKey, this.publicKey);
+            if (this.type != null && this.logger != null && this.redis != null) {
+                return new HydraAPI(this.type, this.application, this.logger, this.logHeader, this.redis);
             }
             throw new HydraException("Cannot build HydraAPI with a null value!");
         }
@@ -346,10 +296,16 @@ public class HydraAPI {
      * An enumeration used to know what type of application is running {@link HydraAPI}
      */
     public enum Type {
+
         /** The application is a simple client that received orders */
         CLIENT,
-        /** The application is a server that manage all clients */
-        SERVER
+        /** The application is a server */
+        SERVER,
+        /** The application is a proxy */
+        PROXY,
+        /** The application is Hydra */
+        HYDRA
+
     }
 
 }

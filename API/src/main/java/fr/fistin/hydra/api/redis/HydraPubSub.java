@@ -1,15 +1,12 @@
 package fr.fistin.hydra.api.redis;
 
 import fr.fistin.hydra.api.HydraAPI;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 /**
@@ -22,10 +19,6 @@ public class HydraPubSub extends JedisPubSub {
     /** PubSub state. If <code>true</code>, PubSub are running */
     private boolean running;
 
-    /** The sender of all messages */
-    private final Sender sender;
-    /** The sender thread */
-    private Thread senderThread;
     /** The subscriber thread */
     private Thread subscriberThread;
 
@@ -43,7 +36,6 @@ public class HydraPubSub extends JedisPubSub {
     public HydraPubSub(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
         this.receivers = new HashMap<>();
-        this.sender = new Sender();
     }
 
     /**
@@ -54,19 +46,15 @@ public class HydraPubSub extends JedisPubSub {
 
         this.running = true;
 
-        this.senderThread = new Thread(this.sender, "PubSub Sender");
-        this.senderThread.start();
-
         this.subscriberThread = new Thread(() -> {
             while (this.running) {
-                try (final Jedis jedis = this.hydraAPI.getRedisResource()) {
-                    if (jedis != null) {
-                        jedis.psubscribe(this, HydraAPI.HYDRA_NAME + "*");
-                    }
+                this.hydraAPI.getRedis().process(jedis -> {
+                    jedis.psubscribe(this, HydraAPI.HYDRA_NAME + "*");
 
                     HydraAPI.log(Level.SEVERE, "Redis is no longer responding to subscriber!");
+
                     this.stop();
-                }
+                });
             }
         }, "PubSub Subscriber");
         this.subscriberThread.start();
@@ -79,14 +67,12 @@ public class HydraPubSub extends JedisPubSub {
         HydraAPI.log("Stopping PubSub...");
 
         this.running = false;
-        this.sender.running = false;
 
         if (this.isSubscribed()) {
             this.unsubscribe();
         }
 
         this.subscriberThread.interrupt();
-        this.senderThread.interrupt();
     }
 
     /**
@@ -101,10 +87,6 @@ public class HydraPubSub extends JedisPubSub {
         receivers.add(receiver);
 
         this.receivers.put(channel, receivers);
-
-        if (this.isSubscribed()) {
-            this.unsubscribe();
-        }
     }
 
     /**
@@ -114,30 +96,13 @@ public class HydraPubSub extends JedisPubSub {
      * @param receiver Receiver to unsubscribe
      */
     public void unsubscribe(String channel, IHydraReceiver receiver) {
-        try {
-            final Set<IHydraReceiver> receivers = this.receivers.get(channel);
+        final Set<IHydraReceiver> receivers = this.receivers.get(channel);
 
-            if (receivers != null && receivers.contains(receiver)) {
-                receivers.remove(receiver);
+        if (receivers != null) {
+            receivers.remove(receiver);
 
-                this.receivers.put(channel, receivers);
-
-                if (this.isSubscribed()) {
-                    this.unsubscribe();
-                }
-            }
-        } catch (Exception ignored) {}
-    }
-
-    /**
-     * Send a given message on a channel
-     *
-     * @param channel Channel
-     * @param message Message to send
-     * @param callback Callback to fire after sending message
-     */
-    public void send(String channel, String message, Runnable callback) {
-        this.sender.messages.add(new HydraPubSubMessage(channel, message, callback));
+            this.receivers.put(channel, receivers);
+        }
     }
 
     /**
@@ -147,7 +112,7 @@ public class HydraPubSub extends JedisPubSub {
      * @param message Message to send
      */
     public void send(String channel, String message) {
-        this.send(channel, message, null);
+        this.hydraAPI.getRedis().process(jedis -> jedis.publish(channel, message));
     }
 
     /**
@@ -163,76 +128,6 @@ public class HydraPubSub extends JedisPubSub {
         if (receivers != null) {
             receivers.forEach(receiver -> receiver.receive(channel, message));
         }
-    }
-
-    /**
-     * This class represents the PubSub sender
-     */
-    private class Sender implements Runnable {
-
-        /** Queue of all remaining messages to send */
-        private final LinkedBlockingQueue<HydraPubSubMessage> messages = new LinkedBlockingQueue<>();
-
-        /** Send state. If <code>true</code>, the sender is currently running */
-        private boolean running = true;
-        /** {@link Jedis} instance */
-        private Jedis jedis;
-
-        @Override
-        public void run() {
-            this.checkRedis();
-
-            while (this.running) {
-                try {
-                    this.processMessage(this.messages.take());
-                } catch (InterruptedException e) {
-                    this.jedis.close();
-                    HydraAPI.log(Level.INFO, String.format("[%s] Interrupted!", this.getClass().getSimpleName()));
-                    e.printStackTrace();
-                    return;
-                }
-            }
-        }
-
-        private void processMessage(HydraPubSubMessage message) {
-            final Runnable callback = message.getCallback();
-
-            boolean published = false;
-
-            while (!published) {
-                try {
-
-                    this.jedis.publish(message.getChannel(), message.getMessage());
-
-                    if (callback != null) {
-                        callback.run();
-                    }
-
-                    published = true;
-                } catch (Exception e) {
-                    this.checkRedis();
-                }
-            }
-        }
-
-        private void checkRedis() {
-            try {
-                this.jedis = hydraAPI.getRedisResource();
-            } catch (Exception e) {
-                HydraAPI.log(Level.SEVERE, String.format("[%s] Couldn't contact Redis server! Error: %s. Rechecking in 5 seconds.", this.getClass().getSimpleName(), e.getMessage()));
-
-                try {
-                    Thread.sleep(5000);
-
-                    HydraAPI.log(Level.INFO, String.format("[%s] Rechecking Redis connection...", this.getClass().getSimpleName()));
-
-                    this.checkRedis();
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        }
-
     }
 
 }

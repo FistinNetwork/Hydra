@@ -1,13 +1,13 @@
 package fr.fistin.hydra.api.protocol;
 
+import fr.fistin.hydra.api.protocol.heartbeat.HydraHeartbeatPacket;
 import fr.fistin.hydra.api.protocol.packet.HydraPacket;
-import fr.fistin.hydra.api.protocol.packet.model.HydraHeartbeatPacket;
-import fr.fistin.hydra.api.protocol.packet.model.HydraResponsePacket;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraProxyServerActionPacket;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStartProxyPacket;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraStopProxyPacket;
-import fr.fistin.hydra.api.protocol.packet.model.server.HydraStartServerPacket;
-import fr.fistin.hydra.api.protocol.packet.model.server.HydraStopServerPacket;
+import fr.fistin.hydra.api.protocol.response.HydraResponsePacket;
+import fr.fistin.hydra.api.proxy.packet.HydraStartProxyPacket;
+import fr.fistin.hydra.api.proxy.packet.HydraStopProxyPacket;
+import fr.fistin.hydra.api.server.packet.HydraStartServerPacket;
+import fr.fistin.hydra.api.server.packet.HydraStopServerPacket;
+import fr.fistin.hydra.api.server.packet.HydraUpdateServerPacket;
 
 /**
  * Project: Hydra
@@ -23,11 +23,11 @@ public enum HydraProtocol {
     /** Server */
     START_SERVER(10, HydraStartServerPacket.class),
     STOP_SERVER(11, HydraStopServerPacket.class),
+    UPDATE_SERVER(12, HydraUpdateServerPacket.class),
 
     /** Proxy */
     START_PROXY(30, HydraStartProxyPacket.class),
     STOP_PROXY(31, HydraStopProxyPacket.class),
-    SERVER_ACTION_PACKET(32, HydraProxyServerActionPacket.class),
 
     ;
 

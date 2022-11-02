@@ -1,8 +1,9 @@
 package fr.fistin.hydra.redis;
 
-import fr.fistin.hydra.config.HydraRedisConfig;
+import fr.fistin.hydra.Hydra;
+import fr.fistin.hydra.api.protocol.data.RedisData;
+import fr.fistin.hydra.api.redis.IHydraRedis;
 import fr.fistin.hydra.util.References;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
@@ -11,7 +12,7 @@ import redis.clients.jedis.JedisPoolConfig;
  * Created by AstFaster
  * on 25/10/2021 at 09:51
  */
-public class HydraRedis {
+public class HydraRedis implements IHydraRedis {
 
     private JedisPool jedisPool;
 
@@ -19,14 +20,16 @@ public class HydraRedis {
 
     private boolean connected;
 
-    private final String redisHost;
-    private final int redisPort;
-    private final String redisPass;
+    private final String hostname;
+    private final int port;
+    private final String password;
 
-    public HydraRedis(HydraRedisConfig redisConfig) {
-        this.redisHost = redisConfig.getHost();
-        this.redisPort = redisConfig.getPort();
-        this.redisPass = redisConfig.getPassword();
+    public HydraRedis() {
+        final RedisData redisData = Hydra.get().getConfig().getRedis();
+
+        this.hostname = redisData.getHostname();
+        this.port = redisData.getPort();
+        this.password = redisData.getPassword();
     }
 
     public boolean connect() {
@@ -35,14 +38,14 @@ public class HydraRedis {
         config.setJmxEnabled(false);
         config.setMaxTotal(-1);
 
-        if (this.redisPass != null && !this.redisPass.isEmpty()) {
-            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 2000, this.redisPass);
+        if (this.password != null && !this.password.isEmpty()) {
+            this.jedisPool = new JedisPool(config, this.hostname, this.port, 2000, this.password);
         } else {
-            this.jedisPool = new JedisPool(config, this.redisHost, this.redisPort, 2000);
+            this.jedisPool = new JedisPool(config, this.hostname, this.port, 2000);
         }
 
         try {
-            this.getJedis().close();
+            this.getResource().close();
 
             this.connected = true;
 
@@ -80,7 +83,7 @@ public class HydraRedis {
 
     private void reconnect() {
         try {
-            this.getJedis().close();
+            this.getResource().close();
         } catch (Exception e) {
             System.err.println("Encountered exception in Redis reconnection task. Error: " + e.getMessage());
             System.err.println("Error in Redis database connection ! Trying to reconnect...");
@@ -103,12 +106,9 @@ public class HydraRedis {
         this.jedisPool.close();
     }
 
-    public JedisPool getJedisPool() {
+    @Override
+    public JedisPool getPool() {
         return this.jedisPool;
-    }
-
-    public Jedis getJedis() {
-        return this.jedisPool.getResource();
     }
 
     public boolean isConnected() {

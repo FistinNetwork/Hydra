@@ -1,5 +1,7 @@
 package fr.fistin.hydra.api.protocol.response;
 
+import fr.fistin.hydra.api.HydraAPI;
+
 /**
  * Project: Hydra
  * Created by AstFaster
@@ -9,7 +11,6 @@ public class HydraResponse {
 
     /** Response's type */
     private HydraResponseType type;
-
     /** Response's message */
     private String message;
 
@@ -25,7 +26,7 @@ public class HydraResponse {
     }
 
     /**
-     * Constructor of {@link HydraResponse}
+     * Constructor of  a {@link HydraResponse} object
      *
      * @param type Type
      */
@@ -34,7 +35,7 @@ public class HydraResponse {
     }
 
     /**
-     * Get type
+     * Get the type of the response
      *
      * @return {@link HydraResponseType}
      */
@@ -43,7 +44,7 @@ public class HydraResponse {
     }
 
     /**
-     * Set type
+     * Set the type of the response
      *
      * @param type New type
      * @return {@link HydraResponse} instance
@@ -54,7 +55,7 @@ public class HydraResponse {
     }
 
     /**
-     * Get message
+     * Get the response message
      *
      * @return A message
      */
@@ -63,13 +64,36 @@ public class HydraResponse {
     }
 
     /**
-     * Set message
+     * Get the response message as an object.<br>
+     * The message will be deserialized from JSON format.
+     *
+     * @param outputClass The class of the output object
+     * @return The message as an object
+     * @param <T> The type of the object to return
+     */
+    public <T> T getMessage(Class<T> outputClass) {
+        return HydraAPI.GSON.fromJson(this.message, outputClass);
+    }
+
+    /**
+     * Set response message as {@link String}
      *
      * @param message New message
-     * @return {@link HydraResponse} instance
+     * @return This {@link HydraResponse} instance
      */
     public HydraResponse withMessage(String message) {
         this.message = message;
+        return this;
+    }
+
+    /**
+     * Set message as an object that will be serialized in JSON format.
+     *
+     * @param message New message
+     * @return This {@link HydraResponse} instance
+     */
+    public HydraResponse withMessage(Object message) {
+        this.message = HydraAPI.GSON.toJson(message);
         return this;
     }
 

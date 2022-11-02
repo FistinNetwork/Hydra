@@ -1,5 +1,10 @@
 package fr.fistin.hydra.api.proxy;
 
+import fr.fistin.hydra.api.protocol.data.HydraData;
+import fr.fistin.hydra.api.server.HydraServer;
+
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -9,130 +14,200 @@ import java.util.UUID;
  */
 public class HydraProxy {
 
-    /** Proxy id */
-    protected final UUID uuid;
+    /** The maximum amount of players on a proxy */
+    public static final int SLOTS = 750;
 
-    /** Proxy started time */
-    protected final long startedTime;
+    /** The name of the proxy */
+    private final String name;
 
-    /** Proxy port */
-    protected int port;
+    /** The time when the proxy started (in milliseconds) */
+    private final long startedTime;
 
-    /** Proxy state */
-    protected HydraProxyState state;
+    /** The current state of the proxy */
+    private State state;
 
-    /** Proxy players */
-    protected int players;
+    /** The data of the proxy */
+    private HydraData data;
+
+    /** The players that are currently connected to the proxy */
+    private final Set<UUID> players;
+
+    /** The port of the proxy outside the cluster */
+    private final int port;
+
+    /** The last heartbeat of the proxy */
+    private long lastHeartbeat;
 
     /**
-     * Constructor of {@link HydraProxy}
+     * Full constructor of a {@link HydraProxy}
      *
-     * @param startedTime Proxy started time
+     * @param name The name of the proxy
+     * @param startedTime The time when the proxy started (in milliseconds)
+     * @param state The current state of the server
+     * @param data The data of the proxy
+     * @param players The player that are on the proxy
+     * @param port The port of the proxy
      */
-    public HydraProxy(long startedTime) {
-        this.uuid = UUID.randomUUID();
+    public HydraProxy(String name, long startedTime, State state, HydraData data, Set<UUID> players, int port) {
+        this.name = name;
         this.startedTime = startedTime;
-        this.state = HydraProxyState.CREATING;
+        this.state = state;
+        this.data = data;
+        this.players = players;
+        this.port = port;
     }
 
     /**
-     * Constructor of {@link HydraProxy}
+     * Simple constructor of a {@link HydraProxy}
      *
+     * @param data The data of the proxy
+     * @param port The port of the proxy
      */
-    public HydraProxy() {
-        this(System.currentTimeMillis());
+    public HydraProxy(HydraData data, int port) {
+        this("proxy-" + UUID.randomUUID().toString().split("-")[0].substring(0, 5), System.currentTimeMillis(), State.CREATING, data, new HashSet<>(), port);
     }
 
     /**
-     * Get proxy's unique id
+     * Get the name of the proxy.<br>
+     * E.g. proxy-5vs4x
      *
-     * @return {@link UUID}
-     */
-    public UUID getUniqueId() {
-        return this.uuid;
-    }
-
-    /**
-     * Get proxy's name
-     *
-     * @return Proxy's name
+     * @return A name
      */
     public String getName() {
-        return this.toString();
+        return this.name;
     }
 
     /**
-     * Get proxy's started time in millis
+     * Get the time when the proxy started
      *
-     * @return Proxy's started time
+     * @return A time (in milliseconds)
      */
     public long getStartedTime() {
         return this.startedTime;
     }
 
     /**
-     * Get proxy's open port
+     * Get the current state of the proxy
      *
-     * @return Proxy's port
+     * @return A {@link State}
+     */
+    public State getState() {
+        return this.state;
+    }
+
+    /**
+     * Set the current state of the proxy
+     *
+     * @param state The new {@link State}
+     */
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    /**
+     * Get the data of the proxy
+     *
+     * @return The {@link HydraData} object
+     */
+    public HydraData getData() {
+        return this.data;
+    }
+
+    /**
+     * Set the data of the proxy
+     *
+     * @param data The new {@link HydraData} object
+     */
+    public void setData(HydraData data) {
+        this.data = data;
+    }
+
+    /**
+     * Get the players that are currently connected to the proxy
+     *
+     * @return A set of player {@link UUID}
+     */
+    public Set<UUID> getPlayers() {
+        return this.players;
+    }
+
+    /**
+     * Add a player connected to the proxy
+     *
+     * @param player The {@link UUID} of the player to add
+     */
+    public void addPlayer(UUID player) {
+        this.players.add(player);
+    }
+
+    /**
+     * Remove a player connected to the proxy
+     *
+     * @param player The {@link UUID} of the player to remove
+     */
+    public void removePlayer(UUID player) {
+        this.players.remove(player);
+    }
+
+    /**
+     * Get the port of the proxy outside the cluster
+     *
+     * @return A port number
      */
     public int getPort() {
         return this.port;
     }
 
     /**
-     * Set proxy's open port<br>
-     * WARNING: If the proxy is already running, it will have no impact on the proxy
+     * Get the last heartbeat of the proxy
      *
-     * @param port New proxy's port
+     * @return A heartbeat timestamp (milliseconds)
      */
-    public void setPort(int port) {
-        this.port = port;
+    public long getLastHeartbeat() {
+        return this.lastHeartbeat;
     }
 
     /**
-     * Get proxy's state
+     * The proxy just sent a heartbeat.
      *
-     * @return {@link HydraProxyState}
+     * @return <code>true</code> if it's the first heartbeat of the proxy
      */
-    public HydraProxyState getState() {
-        return this.state;
-    }
+    public boolean heartbeat() {
+        final long oldHeartbeat = this.lastHeartbeat;
 
-    /**
-     * Set proxy's state
-     *
-     * @param state New {@link HydraProxyState}
-     */
-    public void setState(HydraProxyState state) {
-        this.state = state;
-    }
+        if (oldHeartbeat == -1) {
+            this.state = State.STARTING;
+        }
 
-    /**
-     * Get players count on the proxy
-     *
-     * @return Players count
-     */
-    public int getPlayers() {
-        return this.players;
-    }
+        this.lastHeartbeat = System.currentTimeMillis();
 
-    /**
-     * Set proxy's players
-     *
-     * @param players New value
-     */
-    public void setPlayers(int players) {
-        this.players = players;
+        return oldHeartbeat == -1;
     }
 
     /**
      * Override {@link Object#toString()}
      *
-     * @return Formatted proxy's name
+     * @return The name of the proxy
      */
     @Override
     public String toString() {
-        return "proxy-" + this.uuid.toString().split("-")[0];
+        return this.name;
+    }
+
+    /** This enum represents the different states of a proxy */
+    public enum State {
+
+        /** Proxy is creating (when Docker/K8s just created it) */
+        CREATING,
+        /** Proxy is starting (when the onEnable method is fired in Core plugin) */
+        STARTING,
+        /** Proxy is ready to support players */
+        READY,
+        /** Proxy is stopping */
+        SHUTDOWN,
+        /** Proxy is idling (an error occurred or freezing) */
+        IDLE
+
     }
 
 }

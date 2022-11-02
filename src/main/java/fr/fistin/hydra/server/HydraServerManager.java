@@ -1,15 +1,18 @@
 package fr.fistin.hydra.server;
 
 import fr.fistin.hydra.Hydra;
-import fr.fistin.hydra.api.event.model.HydraServerStartEvent;
-import fr.fistin.hydra.api.event.model.HydraServerStopEvent;
+import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.HydraConnection;
-import fr.fistin.hydra.api.protocol.packet.model.proxy.HydraProxyServerActionPacket;
-import fr.fistin.hydra.api.protocol.packet.model.server.HydraStopServerPacket;
 import fr.fistin.hydra.api.protocol.response.HydraResponseCallback;
 import fr.fistin.hydra.api.protocol.response.HydraResponseType;
 import fr.fistin.hydra.api.server.HydraServer;
+import fr.fistin.hydra.api.server.HydraServerCreationInfo;
+import fr.fistin.hydra.api.server.HydraServersService;
+import fr.fistin.hydra.api.server.event.HydraServerStartedEvent;
+import fr.fistin.hydra.api.server.event.HydraServerStoppedEvent;
+import fr.fistin.hydra.api.server.event.HydraServerUpdatedEvent;
+import fr.fistin.hydra.api.server.packet.HydraStopServerPacket;
 import fr.fistin.hydra.docker.image.DockerImage;
 import fr.fistin.hydra.docker.swarm.DockerSwarm;
 import fr.fistin.hydra.util.References;
@@ -22,76 +25,60 @@ public class HydraServerManager {
 
     public static final DockerImage SERVER_IMAGE = new DockerImage("hydra-server", "latest");
 
-    private final Set<HydraServer> servers;
-
+    private final HydraServersService serversService;
     private final DockerSwarm swarm;
 
-    private final HydraConnection connection;
     private final Hydra hydra;
 
     public HydraServerManager(Hydra hydra) {
         this.hydra = hydra;
-        this.connection = this.hydra.getAPI().getConnection();
+        this.serversService = this.hydra.getAPI().getServersService();
         this.swarm = this.hydra.getDocker().getSwarm();
-        this.servers = new HashSet<>();
 
         this.hydra.getDocker().getImageManager().buildImage(Paths.get(References.IMAGES_FOLDER.toString(), "ServerDockerfile").toFile(), SERVER_IMAGE.getName());
     }
 
-    public void startServer(String type) {
-        final HydraServer server = new HydraServer(type);
-        final HydraServerService service = new HydraServerService(this.hydra, server);
+    public HydraServer startServer(HydraServerCreationInfo serverInfo) {
+        final HydraServer server = new HydraServer(serverInfo);
+        final HydraServerService service = new HydraServerService(server);
 
         this.swarm.runService(service);
-        this.servers.add(server);
-
-        this.connection.sendPacket(HydraChannel.PROXIES, new HydraProxyServerActionPacket(HydraProxyServerActionPacket.Action.ADD, server.getName()))
-                .exec();
-        this.hydra.getAPI().getEventBus().publish(new HydraServerStartEvent(server.getName()));
+        this.saveServer(server);
+        this.hydra.getAPI().getEventBus().publish(new HydraServerStartedEvent(server));
 
         System.out.println("Starting '" + server + "' server...");
+
+        return server;
     }
 
     public boolean stopServer(String name) {
-        final HydraServer server = this.getServerByName(name);
+        final HydraServer server = this.serversService.getServer(name);
 
-        if (server != null) {
-            final HydraStopServerPacket packet = new HydraStopServerPacket(name);
-            final HydraResponseCallback responseCallback = response -> {
-                if (response.getType() != HydraResponseType.OK) {
-                    System.err.println("'" + server.getName() + "' server doesn't want to stop! Response: " + response + ". Reason: " + response.getMessage() + ". Forcing it to stop!");
-                }
-
-                this.swarm.removeService(name);
-
-                this.hydra.getAPI().getEventBus().publish(new HydraServerStopEvent(server.getName()));
-
-                System.out.println("Stopping '" + server.getName() + "' server...");
-            };
-
-            this.connection.sendPacket(HydraChannel.PROXIES, new HydraProxyServerActionPacket(HydraProxyServerActionPacket.Action.REMOVE, name)).exec();
-            this.connection.sendPacket(HydraChannel.SERVERS, packet)
-                    .withResponseCallback(responseCallback)
-                    .exec();
-
-            return true;
-        } else {
+        if (server == null) {
             System.err.println("Couldn't stop a server with the name: " + name + "!");
+            return false;
         }
-        return false;
+
+        System.out.println("Stopping '" + server.getName() + "' server...");
+
+        server.setState(HydraServer.State.SHUTDOWN);
+
+        this.updateServer(server);
+
+        this.swarm.removeService(name);
+        this.hydra.getAPI().getEventBus().publish(new HydraServerStoppedEvent(server));
+        this.hydra.getRedis().process(jedis -> jedis.del(HydraServersService.HASH + server.getType() + ":" + server.getName()));
+
+        return true;
     }
 
-    public HydraServer getServerByName(String name) {
-        for (HydraServer server : this.servers) {
-            if (server.getName().equals(name)) {
-                return server;
-            }
-        }
-        return null;
+    public void updateServer(HydraServer server) {
+        this.saveServer(server);
+        this.hydra.getAPI().getEventBus().publish(new HydraServerUpdatedEvent(server));
     }
 
-    public Set<HydraServer> getServers() {
-        return this.servers;
+    public void saveServer(HydraServer server) {
+        this.hydra.getRedis().process(jedis -> jedis.set(HydraServersService.HASH + server.getType() + ":" + server.getName(), HydraAPI.GSON.toJson(server)));
     }
 
 }
