@@ -38,6 +38,7 @@ public class HydraServersService {
      * Create a server with given information by querying Hydra.
      *
      * @param serverInfo The information of the server to create
+     * @param onCreated The consumer to trigger when the server will be created
      */
     public void createServer(HydraServerCreationInfo serverInfo, Consumer<HydraServer> onCreated) {
         if (serverInfo.getType() == null || serverInfo.getData() == null || serverInfo.getOptions() == null || serverInfo.getAccessibility() == null || serverInfo.getProcess() == null) {

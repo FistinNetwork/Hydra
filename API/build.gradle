@@ -27,12 +27,13 @@ tasks.withType(Javadoc) {
 
 shadowJar {
     configurations = [project.configurations.runtimeClasspath]
+    classifier ''
 }
 
 publishing {
     publications {
-        maven(MavenPublication) {
-            from components.java
+        maven(MavenPublication) { publication ->
+            project.shadow.component(publication)
             artifact tasks.sourcesJar
             artifact tasks.javadocJar
 

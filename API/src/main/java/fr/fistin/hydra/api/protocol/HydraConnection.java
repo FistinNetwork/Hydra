@@ -86,6 +86,7 @@ public class HydraConnection {
      *
      * @param channel Channel
      * @param packet Packet to send
+     * @return The created {@linkplain HydraPacketRequest packet request}
      */
     public HydraPacketRequest sendPacket(HydraChannel channel, HydraPacket packet) {
         return new HydraPacketRequest(this.hydraAPI)

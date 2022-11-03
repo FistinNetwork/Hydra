@@ -38,6 +38,7 @@ public class HydraProxiesService {
      * Create a proxy with given information by querying Hydra.
      *
      * @param proxyInfo The information of the proxy to create
+     * @param onCreated The consumer to trigger when the proxy will be created
      */
     public void createProxy(HydraProxyCreationInfo proxyInfo, Consumer<HydraProxy> onCreated) {
         if (proxyInfo.getData() == null) {
