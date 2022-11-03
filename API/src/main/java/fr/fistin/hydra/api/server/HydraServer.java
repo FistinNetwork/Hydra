@@ -24,6 +24,7 @@ public class HydraServer {
     /** The map of the server */
     private String map;
 
+    /** The accessibility level of the server */
     private Accessibility accessibility;
     /** The type of process the servers is running */
     private Process process;

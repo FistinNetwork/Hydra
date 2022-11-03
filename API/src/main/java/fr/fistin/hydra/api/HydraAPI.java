@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import fr.fistin.hydra.api.event.HydraEventBus;
 import fr.fistin.hydra.api.protocol.HydraConnection;
+import fr.fistin.hydra.api.protocol.heartbeat.HydraHeartbeatTask;
 import fr.fistin.hydra.api.proxy.HydraProxiesService;
 import fr.fistin.hydra.api.redis.HydraPubSub;
 import fr.fistin.hydra.api.redis.IHydraRedis;
@@ -83,6 +84,8 @@ public class HydraAPI {
 
         this.pubSub.start();
         this.eventBus.start();
+
+        new HydraHeartbeatTask(this).start();
     }
 
     /**

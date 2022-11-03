@@ -1,10 +1,12 @@
 package fr.fistin.hydra.util.logger;
 
+import fr.fistin.hydra.util.References;
 import jline.console.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
@@ -19,16 +21,20 @@ public class HydraLogger extends Logger {
     private ConsoleReader consoleReader;
 
     @SuppressWarnings({"CallToPrintStackTrace", "CallToThreadStartDuringObjectConstruction"})
-    public HydraLogger(String name, Path file) {
-        super(name, null);
+    public HydraLogger() {
+        super(References.NAME, null);
 
         this.setLevel(Level.ALL);
 
         try {
+            if (!Files.exists(References.LOG_FOLDER)) {
+                Files.createDirectory(References.LOG_FOLDER);
+            }
+
             this.consoleReader = new ConsoleReader();
             this.consoleReader.setExpandEvents(false);
 
-            final FileHandler fileHandler = new FileHandler(file.toString());
+            final FileHandler fileHandler = new FileHandler(References.LOG_FILE.toString());
 
             fileHandler.setFormatter(new ConciseFormatter(this, false));
 
@@ -249,8 +255,8 @@ public class HydraLogger extends Logger {
         }
 
         @Override
-        public void flush() throws IOException {
-            final String contents = this.toString(StandardCharsets.UTF_8.name());
+        public void flush() {
+            final String contents = this.toString(StandardCharsets.UTF_8);
 
             super.reset();
 

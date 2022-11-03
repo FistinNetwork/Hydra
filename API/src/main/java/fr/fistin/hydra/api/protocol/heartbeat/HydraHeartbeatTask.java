@@ -21,7 +21,12 @@ public class HydraHeartbeatTask {
      */
     public HydraHeartbeatTask(HydraAPI hydraAPI) {
         this.hydraAPI = hydraAPI;
+    }
 
+    /**
+     * Start the heartbeat task
+     */
+    public void start() {
         if (this.hydraAPI.getType() == HydraAPI.Type.SERVER || this.hydraAPI.getType() == HydraAPI.Type.PROXY) {
             this.hydraAPI.getExecutorService().scheduleAtFixedRate(this::heartbeat, 0, 10, TimeUnit.SECONDS);
         }
@@ -33,5 +38,6 @@ public class HydraHeartbeatTask {
     private void heartbeat() {
         this.hydraAPI.getConnection().sendPacket(this.hydraAPI.getType() == HydraAPI.Type.SERVER ? HydraChannel.SERVERS : HydraChannel.PROXIES, new HydraHeartbeatPacket()).exec();
     }
+
 
 }

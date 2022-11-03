@@ -6,15 +6,10 @@ WORKDIR /usr/app/
 # Copy Hydra project files
 COPY . .
 
-# Get username and token used in build.gradle
-ARG USERNAME
-ARG TOKEN
-ENV USERNAME=$USERNAME TOKEN=$TOKEN
-
 RUN gradle shadowJar
 
 # Run Application
-FROM openjdk:16-slim
+FROM openjdk:18.0.2.1-jdk
 
 WORKDIR /usr/app/
 

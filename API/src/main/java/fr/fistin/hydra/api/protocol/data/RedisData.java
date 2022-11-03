@@ -7,11 +7,11 @@ package fr.fistin.hydra.api.protocol.data;
 public class RedisData {
 
     /** The hostname of Redis database */
-    private final String hostname;
+    private String hostname;
     /** The port Redis database is running at */
-    private final int port;
+    private int port;
     /** The password asked by the Redis database to connect */
-    private final String password;
+    private String password;
 
     /**
      * Create a {@link RedisData} object
@@ -25,6 +25,11 @@ public class RedisData {
         this.port = port;
         this.password = password;
     }
+
+    /**
+     * Blank constructor for serialization/deserialization
+     */
+    private RedisData() {}
 
     /**
      * Get the hostname of the Redis database

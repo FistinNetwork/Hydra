@@ -1,7 +1,9 @@
 package fr.fistin.hydra.api.server;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Project: Hydra
@@ -65,16 +67,14 @@ public class HydraServerOptions {
         this.spawnProtection = spawnProtection;
     }
 
-    public List<String> getEnvs() {
-        final List<String> envs = new ArrayList<>();
-
-        envs.add("ALLOW_NETHER=" + this.nether);
-        envs.add("ANNOUNCE_PLAYER_ACHIEVEMENTS=" + this.broadcastAchievements);
-        envs.add("DIFFICULTY=" + this.difficulty);
-        envs.add("SPAWN_PROTECTION=" + this.spawnProtection);
-        envs.add("ALLOW_FLIGHT=" + this.flight);
-
-        return envs;
+    public Map<String, String> asEnv() {
+        return new HashMap<String, String>() {{
+            put("ALLOW_NETHER", String.valueOf(nether));
+            put("ANNOUNCE_PLAYER_ACHIEVEMENTS", String.valueOf(broadcastAchievements));
+            put("DIFFICULTY", difficulty);
+            put("SPAWN_PROTECTION", String.valueOf(spawnProtection));
+            put("ALLOW_FLIGHT", String.valueOf(flight));
+        }};
     }
 
 }

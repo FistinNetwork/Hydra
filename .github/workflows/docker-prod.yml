@@ -13,9 +13,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build and tag image
-        run: docker build -t "ghcr.io/fistinnetwork/hydra:prod" -f docker/Dockerfile . --build-arg USERNAME=$GITHUB_ACTOR --build-arg TOKEN=$GITHUB_TOKEN
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        run: docker build -t "ghcr.io/fistinnetwork/hydra:prod" -f docker/Dockerfile .
 
       - name: Docker login
         run: docker login ghcr.io -u $GITHUB_ACTOR -p $GITHUB_TOKEN

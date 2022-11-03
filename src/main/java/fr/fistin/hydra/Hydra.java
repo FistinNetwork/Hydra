@@ -3,9 +3,10 @@ package fr.fistin.hydra;
 import fr.fistin.hydra.api.HydraAPI;
 import fr.fistin.hydra.api.protocol.HydraChannel;
 import fr.fistin.hydra.api.protocol.HydraConnection;
+import fr.fistin.hydra.api.proxy.HydraProxyCreationInfo;
 import fr.fistin.hydra.config.HydraConfig;
-import fr.fistin.hydra.docker.Docker;
 import fr.fistin.hydra.heartbeat.HydraHeartbeatsChecker;
+import fr.fistin.hydra.kubernetes.Kubernetes;
 import fr.fistin.hydra.proxy.HydraProxyManager;
 import fr.fistin.hydra.receiver.HydraProxiesReceiver;
 import fr.fistin.hydra.receiver.HydraQueryReceiver;
@@ -15,6 +16,9 @@ import fr.fistin.hydra.server.HydraServerManager;
 import fr.fistin.hydra.util.References;
 import fr.fistin.hydra.util.logger.HydraLogger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+
 public class Hydra {
 
     private static Hydra instance;
@@ -22,8 +26,8 @@ public class Hydra {
     /** Logger */
     private HydraLogger logger;
 
-    /** Docker */
-    private Docker docker;
+    /** K8s system */
+    private Kubernetes kubernetes;
 
     /** Redis */
     private HydraRedis redis;
@@ -43,12 +47,12 @@ public class Hydra {
 
         HydraLogger.printHeaderMessage();
 
-        this.logger = new HydraLogger(References.NAME, References.LOG_FILE);
+        this.logger = new HydraLogger();
 
         System.out.println("Starting " + References.NAME + "...");
 
         this.config = HydraConfig.load();
-        this.docker = new Docker();
+        this.kubernetes = new Kubernetes();
         this.redis = new HydraRedis();
 
         if (!this.redis.connect()) {
@@ -67,6 +71,8 @@ public class Hydra {
         this.registerReceivers();
 
         new HydraHeartbeatsChecker().start();
+
+        this.proxyManager.startProxy(new HydraProxyCreationInfo());
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
@@ -109,8 +115,8 @@ public class Hydra {
         return this.config;
     }
 
-    public Docker getDocker() {
-        return this.docker;
+    public Kubernetes getKubernetes() {
+        return this.kubernetes;
     }
 
     public HydraRedis getRedis() {
