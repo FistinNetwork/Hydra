@@ -92,6 +92,8 @@ public class Hydra {
             this.redis.disconnect();
         }
 
+        this.kubernetes.stop();
+
         System.out.println(References.NAME + " is now down. See you soon!");
     }
 
